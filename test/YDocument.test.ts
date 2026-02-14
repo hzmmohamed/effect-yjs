@@ -1,8 +1,8 @@
 import { describe, expect, it } from "@effect/vitest"
 import * as S from "effect/Schema"
 import * as Y from "yjs"
-import { YDocument } from "../src/YDocument.js"
 import { YText } from "../src/markers.js"
+import { YDocument } from "../src/YDocument.js"
 
 const TestSchema = S.Struct({
   name: S.String,
@@ -10,7 +10,7 @@ const TestSchema = S.Struct({
   position: S.Struct({ x: S.Number, y: S.Number }),
   tags: S.Array(S.String),
   metadata: S.Record({ key: S.String, value: S.String }),
-  title: YText,
+  title: YText
 })
 
 describe("YDocument", () => {
@@ -60,7 +60,9 @@ describe("YDocument", () => {
     it("wraps operations in a Y.Doc transaction", () => {
       const { root } = YDocument.make(TestSchema)
       let updateCount = 0
-      root.doc.on("update", () => { updateCount++ })
+      root.doc.on("update", () => {
+        updateCount++
+      })
 
       YDocument.transact(root, () => {
         root.rootMap.set("name", "test")

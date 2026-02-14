@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@effect/vitest"
-import { ParseError } from "effect/ParseResult"
+import type { ParseError } from "effect/ParseResult"
 import * as S from "effect/Schema"
 import { TypedYValidationError, UnsupportedSchemaError } from "../src/errors.js"
 

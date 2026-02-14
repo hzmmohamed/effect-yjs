@@ -8,16 +8,16 @@ const Position = { x: S.Number, y: S.Number }
 const Shape = S.Struct({
   id: S.String,
   ...Position,
-  label: YText,
+  label: YText
 })
 
 const AppSchema = S.Struct({
   shapes: S.Record({ key: S.String, value: Shape }),
   metadata: S.Struct({
     title: YText,
-    version: S.Number,
+    version: S.Number
   }),
-  tags: S.Array(S.String),
+  tags: S.Array(S.String)
 })
 
 describe("Full document lifecycle", () => {
@@ -99,7 +99,7 @@ describe("Full document lifecycle", () => {
     const Rectangle = S.Struct({
       id: S.String,
       ...Position,
-      ...Dimensions,
+      ...Dimensions
     })
     const { root } = YDocument.make(S.Struct({ rect: Rectangle }))
     root.focus("rect").set({ id: "r1", x: 0, y: 0, width: 100, height: 50 })
@@ -109,13 +109,13 @@ describe("Full document lifecycle", () => {
   it("schema composability — document-level", () => {
     const ShapesFragment = S.Record({
       key: S.String,
-      value: S.Struct({ x: S.Number, y: S.Number }),
+      value: S.Struct({ x: S.Number, y: S.Number })
     })
     const MetaFragment = S.Struct({ version: S.Number })
 
     const ComposedDoc = S.Struct({
       shapes: ShapesFragment,
-      meta: MetaFragment,
+      meta: MetaFragment
     })
 
     const { root } = YDocument.make(ComposedDoc)

@@ -1,5 +1,5 @@
 import { Atom } from "@effect-atom/atom"
-import * as Y from "yjs"
+import type * as Y from "yjs"
 
 export const atomFromYMapKey = <T>(
   yMap: Y.Map<any>,

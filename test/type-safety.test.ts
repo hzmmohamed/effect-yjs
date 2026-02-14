@@ -5,7 +5,7 @@ import { YDocument } from "../src/index.js"
 const Schema = S.Struct({
   name: S.String,
   count: S.Number,
-  nested: S.Struct({ x: S.Number }),
+  nested: S.Struct({ x: S.Number })
 })
 
 describe("Type safety", () => {

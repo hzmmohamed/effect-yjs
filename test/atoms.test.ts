@@ -1,12 +1,12 @@
-import { describe, expect, it } from "@effect/vitest"
 import { Atom, Registry } from "@effect-atom/atom"
+import { describe, expect, it } from "@effect/vitest"
 import * as S from "effect/Schema"
 import { YDocument } from "../src/YDocument.js"
 
 const TestSchema = S.Struct({
   name: S.String,
   count: S.Number,
-  position: S.Struct({ x: S.Number, y: S.Number }),
+  position: S.Struct({ x: S.Number, y: S.Number })
 })
 
 describe("YLens.atom()", () => {

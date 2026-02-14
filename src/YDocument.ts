@@ -1,7 +1,7 @@
 import type * as S from "effect/Schema"
 import * as Y from "yjs"
-import { createStructLens, type YLens } from "./YLens.js"
 import { buildYjsTree } from "./traversal.js"
+import { createStructLens, type YLens } from "./YLens.js"
 
 const ROOT_MAP_NAME = "root"
 
@@ -25,7 +25,7 @@ export const YDocument = {
       ...lens,
       _tag: "YDocumentRoot",
       doc,
-      rootMap,
+      rootMap
     } as any
     return { doc, root }
   },
@@ -43,7 +43,7 @@ export const YDocument = {
       ...lens,
       _tag: "YDocumentRoot",
       doc,
-      rootMap,
+      rootMap
     } as any
   },
 
@@ -53,5 +53,5 @@ export const YDocument = {
       result = fn()
     })
     return result!
-  },
+  }
 }

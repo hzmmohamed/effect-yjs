@@ -2,16 +2,16 @@ import { describe, expect, it } from "@effect/vitest"
 import * as Effect from "effect/Effect"
 import * as S from "effect/Schema"
 import * as Y from "yjs"
-import { YDocument } from "../src/YDocument.js"
 import { TypedYValidationError } from "../src/errors.js"
 import { YText } from "../src/markers.js"
+import { YDocument } from "../src/YDocument.js"
 
 const PositionSchema = S.Struct({ x: S.Number, y: S.Number })
 
 const TestSchema = S.Struct({
   name: S.String,
   count: S.Number,
-  position: PositionSchema,
+  position: PositionSchema
 })
 
 describe("YLens", () => {
@@ -82,8 +82,8 @@ const RecordSchema = S.Struct({
   scores: S.Record({ key: S.String, value: S.Number }),
   shapes: S.Record({
     key: S.String,
-    value: S.Struct({ x: S.Number, y: S.Number }),
-  }),
+    value: S.Struct({ x: S.Number, y: S.Number })
+  })
 })
 
 describe("YLens — Records", () => {
@@ -119,7 +119,7 @@ describe("YLens — Records", () => {
 
 const ArraySchema = S.Struct({
   numbers: S.Array(S.Number),
-  points: S.Array(S.Struct({ x: S.Number, y: S.Number })),
+  points: S.Array(S.Struct({ x: S.Number, y: S.Number }))
 })
 
 describe("YLens — Arrays", () => {
@@ -133,11 +133,11 @@ describe("YLens — Arrays", () => {
     const { root } = YDocument.make(ArraySchema)
     root.focus("points").set([
       { x: 1, y: 2 },
-      { x: 3, y: 4 },
+      { x: 3, y: 4 }
     ])
     expect(root.focus("points").get()).toEqual([
       { x: 1, y: 2 },
-      { x: 3, y: 4 },
+      { x: 3, y: 4 }
     ])
   })
 
@@ -153,7 +153,7 @@ describe("YLens — Arrays", () => {
 
 const TextSchema = S.Struct({
   title: YText,
-  content: YText,
+  content: YText
 })
 
 describe("YLens — YText", () => {

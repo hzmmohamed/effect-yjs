@@ -1,4 +1,4 @@
-import { Atom } from "@effect-atom/atom"
+import type { Atom } from "@effect-atom/atom"
 import * as Effect from "effect/Effect"
 import { ParseError } from "effect/ParseResult"
 import * as S from "effect/Schema"
@@ -15,10 +15,12 @@ const classifyAST = (ast: AST.AST): LensKind => {
   const core = unwrap(ast)
   if (isYTextAST(core)) return "ytext"
   if (AST.isTypeLiteral(core)) {
-    if (core.propertySignatures.length > 0 && core.indexSignatures.length === 0)
+    if (core.propertySignatures.length > 0 && core.indexSignatures.length === 0) {
       return "struct"
-    if (core.indexSignatures.length > 0 && core.propertySignatures.length === 0)
+    }
+    if (core.indexSignatures.length > 0 && core.propertySignatures.length === 0) {
       return "record"
+    }
     if (core.propertySignatures.length > 0) return "struct"
     return "primitive"
   }
@@ -81,7 +83,7 @@ const readRecordAsObject = (yMap: Y.Map<any>, ast: AST.AST): any => {
   return result
 }
 
-const readArrayAsPlain = (yArray: Y.Array<any>, ast: AST.AST): any[] => {
+const readArrayAsPlain = (yArray: Y.Array<any>, ast: AST.AST): Array<any> => {
   const core = unwrap(ast)
   if (!AST.isTupleType(core) || core.rest.length === 0) return yArray.toArray()
   const itemAST = core.rest[0].type
@@ -130,7 +132,7 @@ const writeStructFromObject = (
 const writeArrayFromPlain = (
   yArray: Y.Array<any>,
   ast: AST.AST,
-  value: any[]
+  value: Array<any>
 ): void => {
   yArray.delete(0, yArray.length)
   const core = unwrap(ast)
@@ -152,8 +154,7 @@ const writeArrayFromPlain = (
 }
 
 export interface YLens<T> {
-  focus: T extends { readonly [K in keyof T]: any }
-    ? <K extends keyof T & string>(key: K) => YLens<T[K]>
+  focus: T extends { readonly [K in keyof T]: any } ? <K extends keyof T & string>(key: K) => YLens<T[K]>
     : (key: string) => YLens<any>
   get: () => T | undefined
   set: (value: T) => void
@@ -244,7 +245,7 @@ export const createStructLens = (
       catch: (error) => {
         if (error instanceof ParseError) return error
         throw error
-      },
+      }
     })
   },
 
@@ -258,13 +259,13 @@ export const createStructLens = (
       catch: (error) => {
         if (error instanceof ParseError) return error
         throw error
-      },
+      }
     })
   },
 
   atom() {
     return atomFromYMap(yMap, () => readStructAsObject(yMap, ast))
-  },
+  }
 })
 
 const createPrimitiveLens = (
@@ -304,7 +305,7 @@ const createPrimitiveLens = (
       catch: (error) => {
         if (error instanceof ParseError) return error
         throw error
-      },
+      }
     })
   },
 
@@ -317,13 +318,13 @@ const createPrimitiveLens = (
       catch: (error) => {
         if (error instanceof ParseError) return error
         throw error
-      },
+      }
     })
   },
 
   atom() {
     return atomFromYMapKey(parentMap, key, () => parentMap.get(key))
-  },
+  }
 })
 
 export const createRecordLens = (
@@ -332,10 +333,9 @@ export const createRecordLens = (
   doc: Y.Doc
 ): YLens<any> => {
   const core = unwrap(ast)
-  const valueAST =
-    AST.isTypeLiteral(core) && core.indexSignatures.length > 0
-      ? core.indexSignatures[0].type
-      : undefined
+  const valueAST = AST.isTypeLiteral(core) && core.indexSignatures.length > 0
+    ? core.indexSignatures[0].type
+    : undefined
   const valueKind = valueAST ? classifyAST(valueAST) : "primitive"
 
   return {
@@ -426,7 +426,7 @@ export const createRecordLens = (
         catch: (error) => {
           if (error instanceof ParseError) return error
           throw error
-        },
+        }
       })
     },
 
@@ -440,13 +440,13 @@ export const createRecordLens = (
         catch: (error) => {
           if (error instanceof ParseError) return error
           throw error
-        },
+        }
       })
     },
 
     atom() {
       return atomFromYMap(yMap, () => readRecordAsObject(yMap, ast))
-    },
+    }
   } as any
 }
 
@@ -490,7 +490,7 @@ export const createArrayLens = (
       catch: (error) => {
         if (error instanceof ParseError) return error
         throw error
-      },
+      }
     })
   },
 
@@ -504,13 +504,13 @@ export const createArrayLens = (
       catch: (error) => {
         if (error instanceof ParseError) return error
         throw error
-      },
+      }
     })
   },
 
   atom() {
     return atomFromYArray(yArray, () => readArrayAsPlain(yArray, ast))
-  },
+  }
 })
 
 const createYTextLens = (
@@ -548,5 +548,5 @@ const createYTextLens = (
 
   atom() {
     return atomFromYText(yText)
-  },
+  }
 })
