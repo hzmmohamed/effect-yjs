@@ -1,13 +1,13 @@
 {
-  "name": "@template/basic",
+  "name": "effect-yjs",
   "version": "0.0.0",
   "type": "module",
   "packageManager": "pnpm@10.14.0",
   "license": "MIT",
-  "description": "A basic Effect package",
+  "description": "Schema-first integration between Effect Schema and Yjs — type-safe, validated, reactive collaborative documents",
   "repository": {
     "type": "git",
-    "url": "<PLACEHOLDER>"
+    "url": "https://github.com/hzmmohamed/effect-yjs"
   },
   "publishConfig": {
     "access": "public",
