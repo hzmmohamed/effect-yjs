@@ -28,7 +28,9 @@
     "changeset-publish": "pnpm build && TEST_DIST= pnpm vitest && changeset publish"
   },
   "dependencies": {
-    "effect": "^3.17.7"
+    "@effect-atom/atom": "^0.5.1",
+    "effect": "^3.17.7",
+    "yjs": "^13.6.29"
   },
   "devDependencies": {
     "@babel/cli": "^7.24.8",
@@ -71,7 +73,6 @@
     }
   },
   "pnpm": {
-    "patchedDependencies": {
-    }
+    "patchedDependencies": {}
   }
 }
