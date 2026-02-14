@@ -28,7 +28,7 @@ const classifyAST = (ast: AST.AST): LensKind => {
   return "primitive"
 }
 
-const getFieldAST = (
+export const getFieldAST = (
   ast: AST.AST,
   key: string
 ): AST.AST | undefined => {
@@ -159,6 +159,14 @@ export interface YLens<T> {
   get: () => T | undefined
   set: (value: T) => void
   setEffect: (value: T) => Effect.Effect<void, ParseError>
+  getSafe: () => Effect.Effect<T, ParseError>
+  atom: () => Atom.Atom<T | undefined>
+}
+
+export interface ReadonlyYLens<T> {
+  focus: T extends { readonly [K in keyof T]: any } ? <K extends keyof T & string>(key: K) => ReadonlyYLens<T[K]>
+    : (key: string) => ReadonlyYLens<any>
+  get: () => T | undefined
   getSafe: () => Effect.Effect<T, ParseError>
   atom: () => Atom.Atom<T | undefined>
 }

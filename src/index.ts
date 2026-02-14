@@ -1,5 +1,7 @@
 export { TypedYValidationError, UnsupportedSchemaError } from "./errors.js"
 export { YText, YTextTypeId } from "./markers.js"
+export { YAwareness } from "./YAwareness.js"
+export type { AwarenessLike, YAwarenessHandle } from "./YAwareness.js"
 export { YDocument } from "./YDocument.js"
 export type { YDocumentRoot } from "./YDocument.js"
-export type { YLens } from "./YLens.js"
+export type { ReadonlyYLens, YLens } from "./YLens.js"
