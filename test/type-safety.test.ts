@@ -20,14 +20,14 @@ describe("Type safety", () => {
 
   it("set accepts only the correct type", () => {
     const { root } = YDocument.make(Schema)
-    root.focus("name").set("hello")
+    root.focus("name").unsafeSet("hello")
     // @ts-expect-error — number is not assignable to string
-    expect(() => root.focus("name").set(123)).toThrow()
+    expect(() => root.focus("name").unsafeSet(123)).toThrow()
   })
 
   it("nested focus is type-safe", () => {
     const { root } = YDocument.make(Schema)
-    root.focus("nested").focus("x").set(1)
+    root.focus("nested").focus("x").unsafeSet(1)
     // @ts-expect-error — "y" is not a field of nested
     expect(() => root.focus("nested").focus("y")).toThrow()
   })

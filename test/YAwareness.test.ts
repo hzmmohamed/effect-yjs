@@ -53,54 +53,54 @@ describe("YAwareness", () => {
     it("setLocal and getLocal round-trip", () => {
       const doc = new Y.Doc()
       const handle = YAwareness.make(PresenceSchema, doc)
-      handle.local.set(alice)
-      expect(handle.local.get()).toEqual(alice)
+      handle.local.unsafeSet(alice)
+      expect(handle.local.unsafeGet()).toEqual(alice)
       handle.awareness.destroy()
     })
 
     it("focus into nested fields and read", () => {
       const doc = new Y.Doc()
       const handle = YAwareness.make(PresenceSchema, doc)
-      handle.local.set(alice)
-      expect(handle.local.focus("cursor").get()).toEqual({ x: 10, y: 20 })
-      expect(handle.local.focus("cursor").focus("x").get()).toBe(10)
-      expect(handle.local.focus("user").focus("name").get()).toBe("Alice")
+      handle.local.unsafeSet(alice)
+      expect(handle.local.focus("cursor").unsafeGet()).toEqual({ x: 10, y: 20 })
+      expect(handle.local.focus("cursor").focus("x").unsafeGet()).toBe(10)
+      expect(handle.local.focus("user").focus("name").unsafeGet()).toBe("Alice")
       handle.awareness.destroy()
     })
 
     it("focus into nested field and set", () => {
       const doc = new Y.Doc()
       const handle = YAwareness.make(PresenceSchema, doc)
-      handle.local.set(alice)
-      handle.local.focus("cursor").focus("x").set(100)
-      expect(handle.local.focus("cursor").focus("x").get()).toBe(100)
+      handle.local.unsafeSet(alice)
+      handle.local.focus("cursor").focus("x").unsafeSet(100)
+      expect(handle.local.focus("cursor").focus("x").unsafeGet()).toBe(100)
       // Other fields preserved
-      expect(handle.local.focus("cursor").focus("y").get()).toBe(20)
-      expect(handle.local.focus("user").focus("name").get()).toBe("Alice")
+      expect(handle.local.focus("cursor").focus("y").unsafeGet()).toBe(20)
+      expect(handle.local.focus("user").focus("name").unsafeGet()).toBe("Alice")
       handle.awareness.destroy()
     })
 
     it("focus set on struct replaces the substruct", () => {
       const doc = new Y.Doc()
       const handle = YAwareness.make(PresenceSchema, doc)
-      handle.local.set(alice)
-      handle.local.focus("cursor").set({ x: 99, y: 88 })
-      expect(handle.local.focus("cursor").get()).toEqual({ x: 99, y: 88 })
+      handle.local.unsafeSet(alice)
+      handle.local.focus("cursor").unsafeSet({ x: 99, y: 88 })
+      expect(handle.local.focus("cursor").unsafeGet()).toEqual({ x: 99, y: 88 })
       handle.awareness.destroy()
     })
 
     it("throws TypedYValidationError on invalid set", () => {
       const doc = new Y.Doc()
       const handle = YAwareness.make(PresenceSchema, doc)
-      expect(() => handle.local.set({ user: 123 } as any)).toThrow(TypedYValidationError)
+      expect(() => handle.local.unsafeSet({ user: 123 } as any)).toThrow(TypedYValidationError)
       handle.awareness.destroy()
     })
 
     it("throws TypedYValidationError on invalid focused set", () => {
       const doc = new Y.Doc()
       const handle = YAwareness.make(PresenceSchema, doc)
-      handle.local.set(alice)
-      expect(() => handle.local.focus("cursor").focus("x").set("not a number" as any)).toThrow(
+      handle.local.unsafeSet(alice)
+      expect(() => handle.local.focus("cursor").focus("x").unsafeSet("not a number" as any)).toThrow(
         TypedYValidationError
       )
       handle.awareness.destroy()
@@ -109,7 +109,7 @@ describe("YAwareness", () => {
     it("setEffect returns failure on invalid data", () => {
       const doc = new Y.Doc()
       const handle = YAwareness.make(PresenceSchema, doc)
-      const result = Effect.runSyncExit(handle.local.setEffect({ user: 123 } as any))
+      const result = Effect.runSyncExit(handle.local.set({ user: 123 } as any))
       expect(result._tag).toBe("Failure")
       handle.awareness.destroy()
     })
@@ -117,17 +117,17 @@ describe("YAwareness", () => {
     it("setEffect succeeds with valid data", () => {
       const doc = new Y.Doc()
       const handle = YAwareness.make(PresenceSchema, doc)
-      const result = Effect.runSyncExit(handle.local.setEffect(alice))
+      const result = Effect.runSyncExit(handle.local.set(alice))
       expect(result._tag).toBe("Success")
-      expect(handle.local.get()).toEqual(alice)
+      expect(handle.local.unsafeGet()).toEqual(alice)
       handle.awareness.destroy()
     })
 
     it("getSafe validates and returns", () => {
       const doc = new Y.Doc()
       const handle = YAwareness.make(PresenceSchema, doc)
-      handle.local.set(alice)
-      const result = Effect.runSync(handle.local.focus("cursor").getSafe())
+      handle.local.unsafeSet(alice)
+      const result = Effect.runSync(handle.local.focus("cursor").get())
       expect(result).toEqual({ x: 10, y: 20 })
       handle.awareness.destroy()
     })
@@ -136,7 +136,7 @@ describe("YAwareness", () => {
       const doc = new Y.Doc()
       const handle = YAwareness.make(PresenceSchema, doc)
       // Awareness initializes with {} by default
-      expect(handle.local.get()).toEqual({})
+      expect(handle.local.unsafeGet()).toEqual({})
       handle.awareness.destroy()
     })
 
@@ -152,10 +152,10 @@ describe("YAwareness", () => {
     it("sets state to null", () => {
       const doc = new Y.Doc()
       const handle = YAwareness.make(PresenceSchema, doc)
-      handle.local.set(alice)
-      expect(handle.local.get()).toEqual(alice)
+      handle.local.unsafeSet(alice)
+      expect(handle.local.unsafeGet()).toEqual(alice)
       handle.clearLocal()
-      expect(handle.local.get()).toBeNull()
+      expect(handle.local.unsafeGet()).toBeNull()
       handle.awareness.destroy()
     })
   })
@@ -172,7 +172,7 @@ describe("YAwareness", () => {
       syncAwareness(a1, a2)
 
       const remote = h2.remote(a1.clientID)
-      expect(remote.get()).toEqual(alice)
+      expect(remote.unsafeGet()).toEqual(alice)
       a1.destroy()
       a2.destroy()
     })
@@ -187,9 +187,9 @@ describe("YAwareness", () => {
       a1.setLocalState(alice as any)
       syncAwareness(a1, a2)
 
-      expect(h2.remote(a1.clientID).focus("cursor").get()).toEqual({ x: 10, y: 20 })
-      expect(h2.remote(a1.clientID).focus("cursor").focus("x").get()).toBe(10)
-      expect(h2.remote(a1.clientID).focus("user").focus("name").get()).toBe("Alice")
+      expect(h2.remote(a1.clientID).focus("cursor").unsafeGet()).toEqual({ x: 10, y: 20 })
+      expect(h2.remote(a1.clientID).focus("cursor").focus("x").unsafeGet()).toBe(10)
+      expect(h2.remote(a1.clientID).focus("user").focus("name").unsafeGet()).toBe("Alice")
       a1.destroy()
       a2.destroy()
     })
@@ -204,7 +204,7 @@ describe("YAwareness", () => {
       a1.setLocalState(alice as any)
       syncAwareness(a1, a2)
 
-      const result = Effect.runSync(h2.remote(a1.clientID).focus("cursor").getSafe())
+      const result = Effect.runSync(h2.remote(a1.clientID).focus("cursor").get())
       expect(result).toEqual({ x: 10, y: 20 })
       a1.destroy()
       a2.destroy()
@@ -213,7 +213,7 @@ describe("YAwareness", () => {
     it("returns undefined for unknown client", () => {
       const doc = new Y.Doc()
       const handle = YAwareness.make(PresenceSchema, doc)
-      expect(handle.remote(999999).get()).toBeUndefined()
+      expect(handle.remote(999999).unsafeGet()).toBeUndefined()
       handle.awareness.destroy()
     })
   })
@@ -230,7 +230,7 @@ describe("YAwareness", () => {
       a2.setLocalState(bob as any)
       syncAwareness(a1, a2)
 
-      const states = h2.getStates()
+      const states = h2.unsafeGetStates()
       expect(states.size).toBe(2)
       expect(states.get(a1.clientID)).toEqual(alice)
       expect(states.get(a2.clientID)).toEqual(bob)
@@ -249,7 +249,7 @@ describe("YAwareness", () => {
       a2.setLocalState(bob as any)
       syncAwareness(a1, a2)
 
-      const result = Effect.runSync(h2.getStatesSafe())
+      const result = Effect.runSync(h2.getStates())
       expect(result.size).toBe(2)
       a1.destroy()
       a2.destroy()
@@ -266,7 +266,7 @@ describe("YAwareness", () => {
       a2.setLocalState(bob as any)
       syncAwareness(a1, a2)
 
-      const result = Effect.runSyncExit(h2.getStatesSafe())
+      const result = Effect.runSyncExit(h2.getStates())
       expect(result._tag).toBe("Failure")
       a1.destroy()
       a2.destroy()
@@ -283,7 +283,7 @@ describe("YAwareness", () => {
       // Awareness initializes with {} by default
       expect(registry.get(atom)).toEqual({})
 
-      handle.local.set(alice)
+      handle.local.unsafeSet(alice)
       expect(registry.get(atom)).toEqual(alice)
       handle.awareness.destroy()
     })
@@ -291,14 +291,14 @@ describe("YAwareness", () => {
     it("focused local atom reflects field changes", () => {
       const doc = new Y.Doc()
       const handle = YAwareness.make(PresenceSchema, doc)
-      handle.local.set(alice)
+      handle.local.unsafeSet(alice)
 
       const cursorAtom = handle.local.focus("cursor").atom()
       const registry = Registry.make()
 
       expect(registry.get(cursorAtom)).toEqual({ x: 10, y: 20 })
 
-      handle.local.focus("cursor").set({ x: 99, y: 88 })
+      handle.local.focus("cursor").unsafeSet({ x: 99, y: 88 })
       expect(registry.get(cursorAtom)).toEqual({ x: 99, y: 88 })
       handle.awareness.destroy()
     })

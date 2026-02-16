@@ -156,18 +156,18 @@ const writeArrayFromPlain = (
 export interface YLens<T> {
   focus: T extends { readonly [K in keyof T]: any } ? <K extends keyof T & string>(key: K) => YLens<T[K]>
     : (key: string) => YLens<any>
-  get: () => T | undefined
-  set: (value: T) => void
-  setEffect: (value: T) => Effect.Effect<void, ParseError>
-  getSafe: () => Effect.Effect<T, ParseError>
+  unsafeGet: () => T | undefined
+  unsafeSet: (value: T) => void
+  set: (value: T) => Effect.Effect<void, ParseError>
+  get: () => Effect.Effect<T, ParseError>
   atom: () => Atom.Atom<T | undefined>
 }
 
 export interface ReadonlyYLens<T> {
   focus: T extends { readonly [K in keyof T]: any } ? <K extends keyof T & string>(key: K) => ReadonlyYLens<T[K]>
     : (key: string) => ReadonlyYLens<any>
-  get: () => T | undefined
-  getSafe: () => Effect.Effect<T, ParseError>
+  unsafeGet: () => T | undefined
+  get: () => Effect.Effect<T, ParseError>
   atom: () => Atom.Atom<T | undefined>
 }
 
@@ -222,11 +222,11 @@ export const createStructLens = (
     return createPrimitiveLens(fieldAST, yMap, key, doc)
   },
 
-  get() {
+  unsafeGet() {
     return readStructAsObject(yMap, ast)
   },
 
-  set(value: any) {
+  unsafeSet(value: any) {
     const schema = S.make(ast)
     try {
       S.decodeUnknownSync(schema)(value)
@@ -241,7 +241,7 @@ export const createStructLens = (
     })
   },
 
-  setEffect(value: any) {
+  set(value: any) {
     return Effect.try({
       try: () => {
         const schema = S.make(ast)
@@ -257,7 +257,7 @@ export const createStructLens = (
     })
   },
 
-  getSafe() {
+  get() {
     return Effect.try({
       try: () => {
         const obj = readStructAsObject(yMap, ast)
@@ -286,11 +286,11 @@ const createPrimitiveLens = (
     throw new Error("Cannot focus into a primitive value")
   }) as any,
 
-  get() {
+  unsafeGet() {
     return parentMap.get(key)
   },
 
-  set(value: any) {
+  unsafeSet(value: any) {
     const schema = S.make(ast)
     try {
       S.decodeUnknownSync(schema)(value)
@@ -303,7 +303,7 @@ const createPrimitiveLens = (
     parentMap.set(key, value)
   },
 
-  setEffect(value: any) {
+  set(value: any) {
     return Effect.try({
       try: () => {
         const schema = S.make(ast)
@@ -317,7 +317,7 @@ const createPrimitiveLens = (
     })
   },
 
-  getSafe() {
+  get() {
     return Effect.try({
       try: () => {
         const schema = S.make(ast)
@@ -467,11 +467,11 @@ export const createArrayLens = (
     throw new Error("Use .at(index) for array access (not yet implemented)")
   }) as any,
 
-  get() {
+  unsafeGet() {
     return readArrayAsPlain(yArray, ast)
   },
 
-  set(value: any) {
+  unsafeSet(value: any) {
     const schema = S.make(ast)
     try {
       S.decodeUnknownSync(schema)(value)
@@ -486,7 +486,7 @@ export const createArrayLens = (
     })
   },
 
-  setEffect(value: any) {
+  set(value: any) {
     return Effect.try({
       try: () => {
         const schema = S.make(ast)
@@ -502,7 +502,7 @@ export const createArrayLens = (
     })
   },
 
-  getSafe() {
+  get() {
     return Effect.try({
       try: () => {
         const arr = readArrayAsPlain(yArray, ast)
@@ -529,17 +529,17 @@ const createYTextLens = (
     throw new Error("Cannot focus into a Y.Text")
   }) as any,
 
-  get() {
+  unsafeGet() {
     return yText
   },
 
-  set(_value: any) {
+  unsafeSet(_value: any) {
     throw new Error(
       "Cannot set Y.Text directly — use the Y.Text API (insert, delete, etc.)"
     )
   },
 
-  setEffect(_value: any) {
+  set(_value: any) {
     return Effect.fail(
       new ParseError({
         _tag: "Type",
@@ -550,7 +550,7 @@ const createYTextLens = (
     )
   },
 
-  getSafe() {
+  get() {
     return Effect.succeed(yText)
   },
 

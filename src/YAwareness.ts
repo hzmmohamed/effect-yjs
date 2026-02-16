@@ -57,9 +57,9 @@ export interface YAwarenessHandle<A> {
   clearLocal(): void
 
   /** Get all connected clients' awareness states (unvalidated) */
-  getStates(): ReadonlyMap<number, A>
+  unsafeGetStates(): ReadonlyMap<number, A>
   /** Get all clients' states with schema validation */
-  getStatesSafe(): Effect.Effect<ReadonlyMap<number, A>, ParseError>
+  getStates(): Effect.Effect<ReadonlyMap<number, A>, ParseError>
   /** Reactive atom tracking all clients' states */
   statesAtom(): Atom.Atom<ReadonlyMap<number, A>>
 
@@ -117,12 +117,12 @@ const createAwarenessLocalLens = (
     return createAwarenessLocalLens(rootAST, fieldAST, awareness, [...path, key])
   },
 
-  get() {
+  unsafeGet() {
     const state = awareness.getLocalState()
     return getAtPath(state, path)
   },
 
-  set(value: any) {
+  unsafeSet(value: any) {
     const schema = S.make(focusedAST)
     try {
       S.decodeUnknownSync(schema)(value)
@@ -142,7 +142,7 @@ const createAwarenessLocalLens = (
     }
   },
 
-  setEffect(value: any) {
+  set(value: any) {
     return Effect.try({
       try: () => {
         const schema = S.make(focusedAST)
@@ -162,7 +162,7 @@ const createAwarenessLocalLens = (
     })
   },
 
-  getSafe() {
+  get() {
     return Effect.try({
       try: () => {
         const raw = getAtPath(awareness.getLocalState(), path)
@@ -199,12 +199,12 @@ const createAwarenessRemoteLens = (
     return createAwarenessRemoteLens(fieldAST, awareness, clientId, [...path, key])
   },
 
-  get() {
+  unsafeGet() {
     const state = awareness.getStates().get(clientId)
     return getAtPath(state, path)
   },
 
-  getSafe() {
+  get() {
     return Effect.try({
       try: () => {
         const state = awareness.getStates().get(clientId)
@@ -262,11 +262,11 @@ const createAwarenessHandle = <A>(
       awareness.setLocalState(null)
     },
 
-    getStates(): ReadonlyMap<number, A> {
+    unsafeGetStates(): ReadonlyMap<number, A> {
       return readStates()
     },
 
-    getStatesSafe(): Effect.Effect<ReadonlyMap<number, A>, ParseError> {
+    getStates(): Effect.Effect<ReadonlyMap<number, A>, ParseError> {
       return Effect.try({
         try: () => {
           const rawMap = awareness.getStates()

@@ -12,14 +12,14 @@ const TestSchema = S.Struct({
 describe("YLens.atom()", () => {
   it("returns an Atom instance", () => {
     const { root } = YDocument.make(TestSchema)
-    root.focus("count").set(42)
+    root.focus("count").unsafeSet(42)
     const atom = root.focus("count").atom()
     expect(Atom.isAtom(atom)).toBe(true)
   })
 
   it("atom reads initial value via registry", () => {
     const { root } = YDocument.make(TestSchema)
-    root.focus("count").set(42)
+    root.focus("count").unsafeSet(42)
     const atom = root.focus("count").atom()
     const registry = Registry.make()
     const value = registry.get(atom)
@@ -28,7 +28,7 @@ describe("YLens.atom()", () => {
 
   it("atom updates when Yjs value changes", () => {
     const { root } = YDocument.make(TestSchema)
-    root.focus("count").set(1)
+    root.focus("count").unsafeSet(1)
     const atom = root.focus("count").atom()
     const registry = Registry.make()
 
@@ -36,7 +36,7 @@ describe("YLens.atom()", () => {
     expect(registry.get(atom)).toBe(1)
 
     // Mutate via YLens
-    root.focus("count").set(2)
+    root.focus("count").unsafeSet(2)
 
     // Atom should reflect the update
     expect(registry.get(atom)).toBe(2)
@@ -44,8 +44,8 @@ describe("YLens.atom()", () => {
 
   it("struct atom reads nested values", () => {
     const { root } = YDocument.make(TestSchema)
-    root.focus("position").focus("x").set(10)
-    root.focus("position").focus("y").set(20)
+    root.focus("position").focus("x").unsafeSet(10)
+    root.focus("position").focus("y").unsafeSet(20)
     const atom = root.focus("position").atom()
     const registry = Registry.make()
     const value = registry.get(atom)

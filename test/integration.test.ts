@@ -25,29 +25,29 @@ describe("Full document lifecycle", () => {
     const { root } = YDocument.make(AppSchema)
 
     // Set primitive fields
-    root.focus("metadata").focus("version").set(1)
+    root.focus("metadata").focus("version").unsafeSet(1)
 
     // Use Y.Text directly
-    const title = root.focus("metadata").focus("title").get() as unknown as Y.Text
+    const title = root.focus("metadata").focus("title").unsafeGet() as unknown as Y.Text
     title.insert(0, "My Drawing")
 
     // Add shapes via record — focus into struct fields
-    root.focus("shapes").focus("shape-1").focus("id").set("shape-1")
-    root.focus("shapes").focus("shape-1").focus("x").set(100)
-    root.focus("shapes").focus("shape-1").focus("y").set(200)
+    root.focus("shapes").focus("shape-1").focus("id").unsafeSet("shape-1")
+    root.focus("shapes").focus("shape-1").focus("x").unsafeSet(100)
+    root.focus("shapes").focus("shape-1").focus("y").unsafeSet(200)
 
     // Focus deep into a shape and update
-    root.focus("shapes").focus("shape-1").focus("x").set(150)
+    root.focus("shapes").focus("shape-1").focus("x").unsafeSet(150)
 
     // Set array
-    root.focus("tags").set(["drawing", "v1"])
+    root.focus("tags").unsafeSet(["drawing", "v1"])
 
     // Read back
-    expect(root.focus("metadata").focus("version").get()).toBe(1)
+    expect(root.focus("metadata").focus("version").unsafeGet()).toBe(1)
     expect(title.toString()).toBe("My Drawing")
-    expect(root.focus("shapes").focus("shape-1").focus("x").get()).toBe(150)
-    expect(root.focus("shapes").focus("shape-1").focus("y").get()).toBe(200)
-    expect(root.focus("tags").get()).toEqual(["drawing", "v1"])
+    expect(root.focus("shapes").focus("shape-1").focus("x").unsafeGet()).toBe(150)
+    expect(root.focus("shapes").focus("shape-1").focus("y").unsafeGet()).toBe(200)
+    expect(root.focus("tags").unsafeGet()).toEqual(["drawing", "v1"])
   })
 
   it("two docs sync via Yjs", () => {
@@ -57,28 +57,28 @@ describe("Full document lifecycle", () => {
     const root2 = YDocument.bind(SimpleSchema, doc2)
 
     // Set on doc1
-    root1.focus("count").set(42)
+    root1.focus("count").unsafeSet(42)
 
     // Sync doc1 → doc2
     const state1 = Y.encodeStateAsUpdate(doc1)
     Y.applyUpdate(doc2, state1)
 
     // Read on doc2
-    expect(root2.focus("count").get()).toBe(42)
+    expect(root2.focus("count").unsafeGet()).toBe(42)
   })
 
   it("lens passed to child component pattern", () => {
     const { root } = YDocument.make(AppSchema)
-    root.focus("shapes").focus("s1").focus("id").set("s1")
-    root.focus("shapes").focus("s1").focus("x").set(10)
-    root.focus("shapes").focus("s1").focus("y").set(20)
+    root.focus("shapes").focus("s1").focus("id").unsafeSet("s1")
+    root.focus("shapes").focus("s1").focus("x").unsafeSet(10)
+    root.focus("shapes").focus("s1").focus("y").unsafeSet(20)
 
     // Simulate passing a lens to a child — child doesn't know about root
     const shapeLens = root.focus("shapes").focus("s1")
     const xLens = shapeLens.focus("x")
 
-    xLens.set(99)
-    expect(xLens.get()).toBe(99)
+    xLens.unsafeSet(99)
+    expect(xLens.unsafeGet()).toBe(99)
   })
 
   it("transactions batch multiple writes", () => {
@@ -87,8 +87,8 @@ describe("Full document lifecycle", () => {
     root.doc.on("update", () => updateCount++)
 
     YDocument.transact(root, () => {
-      root.focus("metadata").focus("version").set(1)
-      root.focus("tags").set(["a", "b"])
+      root.focus("metadata").focus("version").unsafeSet(1)
+      root.focus("tags").unsafeSet(["a", "b"])
     })
 
     expect(updateCount).toBe(1)
@@ -102,8 +102,8 @@ describe("Full document lifecycle", () => {
       ...Dimensions
     })
     const { root } = YDocument.make(S.Struct({ rect: Rectangle }))
-    root.focus("rect").set({ id: "r1", x: 0, y: 0, width: 100, height: 50 })
-    expect(root.focus("rect").focus("width").get()).toBe(100)
+    root.focus("rect").unsafeSet({ id: "r1", x: 0, y: 0, width: 100, height: 50 })
+    expect(root.focus("rect").focus("width").unsafeGet()).toBe(100)
   })
 
   it("schema composability — document-level", () => {
@@ -119,8 +119,8 @@ describe("Full document lifecycle", () => {
     })
 
     const { root } = YDocument.make(ComposedDoc)
-    root.focus("meta").focus("version").set(1)
-    root.focus("shapes").focus("p1").set({ x: 5, y: 10 })
-    expect(root.focus("shapes").focus("p1").get()).toEqual({ x: 5, y: 10 })
+    root.focus("meta").focus("version").unsafeSet(1)
+    root.focus("shapes").focus("p1").unsafeSet({ x: 5, y: 10 })
+    expect(root.focus("shapes").focus("p1").unsafeGet()).toEqual({ x: 5, y: 10 })
   })
 })
