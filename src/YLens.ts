@@ -1,6 +1,6 @@
 import type { Atom } from "@effect-atom/atom"
 import * as Effect from "effect/Effect"
-import { ParseError } from "effect/ParseResult"
+import { ParseError, Type as TypeIssue } from "effect/ParseResult"
 import * as S from "effect/Schema"
 import * as AST from "effect/SchemaAST"
 import * as Y from "yjs"
@@ -282,9 +282,9 @@ const createPrimitiveLens = (
   key: string,
   _doc: Y.Doc
 ): YLens<any> => ({
-  focus: (() => {
+  focus(_key: string): never {
     throw new Error("Cannot focus into a primitive value")
-  }) as any,
+  },
 
   unsafeGet() {
     return parentMap.get(key)
@@ -381,11 +381,11 @@ export const createRecordLens = (
       return createPrimitiveLens(valueAST, yMap, key, doc)
     },
 
-    get() {
+    unsafeGet() {
       return readRecordAsObject(yMap, ast)
     },
 
-    set(value: any) {
+    unsafeSet(value: any) {
       const schema = S.make(ast)
       try {
         S.decodeUnknownSync(schema)(value)
@@ -402,7 +402,7 @@ export const createRecordLens = (
         for (const [k, v] of Object.entries(value as Record<string, any>)) {
           if (valueKind === "struct" && valueAST) {
             const childMap = new Y.Map()
-            writeStructFromObject(childMap, valueAST, v as any)
+            writeStructFromObject(childMap, valueAST, v)
             yMap.set(k, childMap)
           } else {
             yMap.set(k, v)
@@ -411,7 +411,7 @@ export const createRecordLens = (
       })
     },
 
-    setEffect(value: any) {
+    set(value: any) {
       return Effect.try({
         try: () => {
           const schema = S.make(ast)
@@ -423,7 +423,7 @@ export const createRecordLens = (
             for (const [k, v] of Object.entries(value as Record<string, any>)) {
               if (valueKind === "struct" && valueAST) {
                 const childMap = new Y.Map()
-                writeStructFromObject(childMap, valueAST, v as any)
+                writeStructFromObject(childMap, valueAST, v)
                 yMap.set(k, childMap)
               } else {
                 yMap.set(k, v)
@@ -438,7 +438,7 @@ export const createRecordLens = (
       })
     },
 
-    getSafe() {
+    get() {
       return Effect.try({
         try: () => {
           const obj = readRecordAsObject(yMap, ast)
@@ -455,7 +455,7 @@ export const createRecordLens = (
     atom() {
       return atomFromYMap(yMap, () => readRecordAsObject(yMap, ast))
     }
-  } as any
+  }
 }
 
 export const createArrayLens = (
@@ -463,9 +463,9 @@ export const createArrayLens = (
   yArray: Y.Array<any>,
   doc: Y.Doc
 ): YLens<any> => ({
-  focus: (() => {
+  focus(_key: string): never {
     throw new Error("Use .at(index) for array access (not yet implemented)")
-  }) as any,
+  },
 
   unsafeGet() {
     return readArrayAsPlain(yArray, ast)
@@ -525,9 +525,9 @@ const createYTextLens = (
   yText: Y.Text,
   _doc: Y.Doc
 ): YLens<any> => ({
-  focus: (() => {
+  focus(_key: string): never {
     throw new Error("Cannot focus into a Y.Text")
-  }) as any,
+  },
 
   unsafeGet() {
     return yText
@@ -542,11 +542,8 @@ const createYTextLens = (
   set(_value: any) {
     return Effect.fail(
       new ParseError({
-        _tag: "Type",
-        ast: AST.stringKeyword,
-        actual: _value,
-        message: "Cannot set Y.Text directly — use the Y.Text API"
-      } as any)
+        issue: new TypeIssue(AST.stringKeyword, _value, "Cannot set Y.Text directly — use the Y.Text API")
+      })
     )
   },
 

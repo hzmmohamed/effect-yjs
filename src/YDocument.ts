@@ -21,12 +21,11 @@ export const YDocument = {
       buildYjsTree(schema.ast, rootMap, [])
     })
     const lens = createStructLens(schema.ast, rootMap, doc)
-    const root: YDocumentRoot<S.Struct.Type<TFields>> = {
-      ...lens,
-      _tag: "YDocumentRoot",
+    const root = Object.assign(lens, {
+      _tag: "YDocumentRoot" as const,
       doc,
       rootMap
-    } as any
+    }) as YDocumentRoot<S.Struct.Type<TFields>>
     return { doc, root }
   },
 
@@ -39,12 +38,11 @@ export const YDocument = {
       buildYjsTree(schema.ast, rootMap, [])
     })
     const lens = createStructLens(schema.ast, rootMap, doc)
-    return {
-      ...lens,
-      _tag: "YDocumentRoot",
+    return Object.assign(lens, {
+      _tag: "YDocumentRoot" as const,
       doc,
       rootMap
-    } as any
+    }) as YDocumentRoot<S.Struct.Type<TFields>>
   },
 
   transact<T>(root: YDocumentRoot<any>, fn: () => T): T {

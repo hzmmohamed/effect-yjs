@@ -54,7 +54,9 @@ export interface YAwarenessHandle<A> {
   remote(clientId: number): ReadonlyYLens<A>
 
   /** Set local state to null (signals offline to peers) */
-  clearLocal(): void
+  clearLocal(): Effect.Effect<void>
+  /** Set local state to null (signals offline to peers) — throws on failure */
+  unsafeClearLocal(): void
 
   /** Get all connected clients' awareness states (unvalidated) */
   unsafeGetStates(): ReadonlyMap<number, A>
@@ -259,6 +261,10 @@ const createAwarenessHandle = <A>(
     },
 
     clearLocal() {
+      return Effect.sync(() => awareness.setLocalState(null))
+    },
+
+    unsafeClearLocal() {
       awareness.setLocalState(null)
     },
 

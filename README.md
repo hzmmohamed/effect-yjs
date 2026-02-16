@@ -34,18 +34,18 @@ const AppSchema = S.Struct({
 const { doc, root } = YDocument.make(AppSchema)
 
 // Write with validation
-root.focus("metadata").focus("version").set(1)
-root.focus("tags").set(["drawing", "v1"])
+root.focus("metadata").focus("version").unsafeSet(1)
+root.focus("tags").unsafeSet(["drawing", "v1"])
 
 // Focus deep into records
-root.focus("shapes").focus("shape-1").focus("x").set(100)
-root.focus("shapes").focus("shape-1").focus("y").set(200)
+root.focus("shapes").focus("shape-1").focus("x").unsafeSet(100)
+root.focus("shapes").focus("shape-1").focus("y").unsafeSet(200)
 
 // Read back
-root.focus("shapes").focus("shape-1").focus("x").get() // 100
+root.focus("shapes").focus("shape-1").focus("x").unsafeGet() // 100
 
 // Use Y.Text directly for collaborative rich text
-const title = root.focus("metadata").focus("title").get()
+const title = root.focus("metadata").focus("title").unsafeGet()
 title.insert(0, "My Drawing")
 ```
 
@@ -73,8 +73,8 @@ Structs are pre-populated at document creation time — nested shared types are 
 const shapeLens = root.focus("shapes").focus("shape-1")
 const xLens = shapeLens.focus("x")
 
-xLens.set(99)
-xLens.get() // 99
+xLens.unsafeSet(99)
+xLens.unsafeGet() // 99
 ```
 
 A `YLens<T>` depends only on `T` in its type signature — the root reference is internal. Components receive a lens and can read, write, and subscribe without knowing the document structure:
@@ -82,7 +82,7 @@ A `YLens<T>` depends only on `T` in its type signature — the root reference is
 ```ts
 function VertexEditor({ position }: { position: YLens<{ x: number; y: number }> }) {
   const pos = useAtom(position.atom())
-  const onDrag = (p: { x: number; y: number }) => position.set(p)
+  const onDrag = (p: { x: number; y: number }) => position.unsafeSet(p)
   // ...
 }
 ```
@@ -93,13 +93,13 @@ Writes validate through Effect Schema before mutating Yjs:
 
 ```ts
 // Throwing API — for programmer errors
-root.focus("count").set("not a number") // throws TypedYValidationError
+root.focus("count").unsafeSet("not a number") // throws TypedYValidationError
 
 // Effect API — for expected failures
-const result = root.focus("count").setEffect(value) // Effect<void, ParseError>
+const result = root.focus("count").set(value) // Effect<void, ParseError>
 
-// Safe reads — validate data from untrusted peers
-const count = root.focus("count").getSafe() // Effect<number, ParseError>
+// Validated reads — validate data from untrusted peers
+const count = root.focus("count").get() // Effect<number, ParseError>
 ```
 
 ### Reactive Atoms
@@ -122,8 +122,8 @@ Batch multiple writes into a single Yjs transaction:
 
 ```ts
 YDocument.transact(root, () => {
-  root.focus("metadata").focus("version").set(2)
-  root.focus("tags").set(["updated"])
+  root.focus("metadata").focus("version").unsafeSet(2)
+  root.focus("tags").unsafeSet(["updated"])
 })
 ```
 
@@ -139,7 +139,7 @@ const ydoc = new Y.Doc()
 new WebsocketProvider("ws://localhost:1234", "my-room", ydoc)
 
 const root = YDocument.bind(AppSchema, ydoc)
-root.focus("metadata").focus("version").get() // reads synced data
+root.focus("metadata").focus("version").unsafeGet() // reads synced data
 ```
 
 ### Schema Composability
@@ -195,28 +195,28 @@ const handle2 = YAwareness.make(PresenceSchema, doc)
 Your own awareness state is a full `YLens<A>` with `focus()`, validation, and atoms:
 
 ```ts
-handle.local.set({
+handle.local.unsafeSet({
   user: { name: "Alice", color: "#ff0000" },
   cursor: { x: 0, y: 0 },
 })
 
 // Focus into nested fields
-handle.local.focus("cursor").focus("x").set(100)
-handle.local.focus("user").focus("name").get() // "Alice"
+handle.local.focus("cursor").focus("x").unsafeSet(100)
+handle.local.focus("user").focus("name").unsafeGet() // "Alice"
 
 // Reactive atom on a specific field
 const cursorAtom = handle.local.focus("cursor").atom()
 
 // Go offline
-handle.clearLocal()
+handle.unsafeClearLocal()
 ```
 
 #### Remote State — Read-Only Lens
 
-Other clients' states are accessible via `ReadonlyYLens<A>` — same `focus()`/`get()`/`atom()` API, but no `set()`:
+Other clients' states are accessible via `ReadonlyYLens<A>` — same `focus()`/`unsafeGet()`/`atom()` API, but no `set()`:
 
 ```ts
-const bobCursor = handle.remote(bobClientId).focus("cursor").get()
+const bobCursor = handle.remote(bobClientId).focus("cursor").unsafeGet()
 const bobNameAtom = handle.remote(bobClientId).focus("user").focus("name").atom()
 ```
 
@@ -251,17 +251,17 @@ Wraps operations in a single Yjs transaction.
 
 ### `YText`
 
-Schema marker for collaborative text fields. Maps to `Y.Text` in the Yjs document. Access the `Y.Text` instance via `.get()` and manipulate it using the standard Yjs Text API.
+Schema marker for collaborative text fields. Maps to `Y.Text` in the Yjs document. Access the `Y.Text` instance via `.unsafeGet()` and manipulate it using the standard Yjs Text API.
 
 ### `YLens<T>`
 
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `focus(key)` | `YLens<T[K]>` | Focus on a child field or record entry |
-| `get()` | `T \| undefined` | Read the current value |
-| `set(value)` | `void` | Write with validation (throws on failure) |
-| `setEffect(value)` | `Effect<void, ParseError>` | Write with validation (Effect-based) |
-| `getSafe()` | `Effect<T, ParseError>` | Read with validation |
+| `unsafeGet()` | `T \| undefined` | Read the current value |
+| `unsafeSet(value)` | `void` | Write with validation (throws on failure) |
+| `set(value)` | `Effect<void, ParseError>` | Write with validation (Effect-based) |
+| `get()` | `Effect<T, ParseError>` | Read with validation |
 | `atom()` | `Atom<T \| undefined>` | Reactive atom that updates on Yjs changes |
 
 ### `ReadonlyYLens<T>`
@@ -271,8 +271,8 @@ Read-only variant of `YLens<T>`. Used for remote awareness states.
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `focus(key)` | `ReadonlyYLens<T[K]>` | Focus on a child field |
-| `get()` | `T \| undefined` | Read the current value |
-| `getSafe()` | `Effect<T, ParseError>` | Read with validation |
+| `unsafeGet()` | `T \| undefined` | Read the current value |
+| `get()` | `Effect<T, ParseError>` | Read with validation |
 | `atom()` | `Atom<T \| undefined>` | Reactive atom that updates on changes |
 
 ### `YAwareness.make(schema, doc)`
@@ -289,9 +289,10 @@ Binds a schema to an existing `Awareness` instance (e.g., from a provider like `
 |-------------------|---------|-------------|
 | `local` | `YLens<A>` | Read-write lens for the local client's state |
 | `remote(clientId)` | `ReadonlyYLens<A>` | Read-only lens for a remote client's state |
-| `clearLocal()` | `void` | Set local state to null (signals offline) |
-| `getStates()` | `ReadonlyMap<number, A>` | All clients' states (unvalidated) |
-| `getStatesSafe()` | `Effect<ReadonlyMap<number, A>, ParseError>` | All states with validation |
+| `clearLocal()` | `Effect<void>` | Set local state to null (signals offline) |
+| `unsafeClearLocal()` | `void` | Set local state to null (throws on failure) |
+| `unsafeGetStates()` | `ReadonlyMap<number, A>` | All clients' states (unvalidated) |
+| `getStates()` | `Effect<ReadonlyMap<number, A>, ParseError>` | All states with validation |
 | `statesAtom()` | `Atom<ReadonlyMap<number, A>>` | Reactive atom for all states |
 | `clientIdsAtom()` | `Atom<ReadonlyArray<number>>` | Reactive presence tracking (uses `'update'` event) |
 | `remoteStateFamily` | `(id: number) => Atom<A \| undefined>` | Stable per-client atoms via `Atom.family` |

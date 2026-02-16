@@ -149,12 +149,22 @@ describe("YAwareness", () => {
   })
 
   describe("clearLocal", () => {
-    it("sets state to null", () => {
+    it("sets state to null via Effect", () => {
       const doc = new Y.Doc()
       const handle = YAwareness.make(PresenceSchema, doc)
       handle.local.unsafeSet(alice)
       expect(handle.local.unsafeGet()).toEqual(alice)
-      handle.clearLocal()
+      Effect.runSync(handle.clearLocal())
+      expect(handle.local.unsafeGet()).toBeNull()
+      handle.awareness.destroy()
+    })
+
+    it("unsafeClearLocal sets state to null", () => {
+      const doc = new Y.Doc()
+      const handle = YAwareness.make(PresenceSchema, doc)
+      handle.local.unsafeSet(alice)
+      expect(handle.local.unsafeGet()).toEqual(alice)
+      handle.unsafeClearLocal()
       expect(handle.local.unsafeGet()).toBeNull()
       handle.awareness.destroy()
     })
