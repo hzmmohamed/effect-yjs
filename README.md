@@ -11,7 +11,7 @@ Effect Schema stores its schema as a traversable AST. effect-yjs walks that AST 
 ## Install
 
 ```sh
-pnpm add effect-yjs effect yjs @effect-atom/atom
+pnpm add effect-yjs effect yjs y-protocols @effect-atom/atom
 ```
 
 ## Quick Start
@@ -168,6 +168,73 @@ const AppDocument = S.Struct({
 })
 ```
 
+### Awareness — Typed Presence & Ephemeral State
+
+The [Yjs Awareness protocol](https://docs.yjs.dev/getting-started/adding-awareness) handles ephemeral data like cursor positions, user info, and selections. Unlike document data, awareness state is not persisted — it's automatically removed when a client goes offline.
+
+effect-yjs wraps the Awareness CRDT with the same schema-validated lens API used for document data:
+
+```ts
+import * as S from "effect/Schema"
+import { YAwareness } from "effect-yjs"
+
+const PresenceSchema = S.Struct({
+  user: S.Struct({ name: S.String, color: S.String }),
+  cursor: S.Struct({ x: S.Number, y: S.Number }),
+})
+
+// Bind to a provider's awareness instance
+const handle = YAwareness.bind(PresenceSchema, provider.awareness)
+
+// Or create a standalone awareness from a Y.Doc
+const handle2 = YAwareness.make(PresenceSchema, doc)
+```
+
+#### Local State — Read-Write Lens
+
+Your own awareness state is a full `YLens<A>` with `focus()`, validation, and atoms:
+
+```ts
+handle.local.set({
+  user: { name: "Alice", color: "#ff0000" },
+  cursor: { x: 0, y: 0 },
+})
+
+// Focus into nested fields
+handle.local.focus("cursor").focus("x").set(100)
+handle.local.focus("user").focus("name").get() // "Alice"
+
+// Reactive atom on a specific field
+const cursorAtom = handle.local.focus("cursor").atom()
+
+// Go offline
+handle.clearLocal()
+```
+
+#### Remote State — Read-Only Lens
+
+Other clients' states are accessible via `ReadonlyYLens<A>` — same `focus()`/`get()`/`atom()` API, but no `set()`:
+
+```ts
+const bobCursor = handle.remote(bobClientId).focus("cursor").get()
+const bobNameAtom = handle.remote(bobClientId).focus("user").focus("name").atom()
+```
+
+#### Presence Detection & Atom Family
+
+Track who's online with `clientIdsAtom()` (backed by the `'update'` event for heartbeat-based offline detection), and get stable per-client atom references via `Atom.family`:
+
+```ts
+// Reactive list of connected client IDs
+const onlineIds = handle.clientIdsAtom()
+
+// Stable atom per client — value becomes undefined when they go offline
+const bobStateAtom = handle.remoteStateFamily(bobClientId)
+
+// Full states map
+const allStates = handle.statesAtom() // Atom<ReadonlyMap<number, PresenceState>>
+```
+
 ## API Reference
 
 ### `YDocument.make(schema)`
@@ -197,12 +264,46 @@ Schema marker for collaborative text fields. Maps to `Y.Text` in the Yjs documen
 | `getSafe()` | `Effect<T, ParseError>` | Read with validation |
 | `atom()` | `Atom<T \| undefined>` | Reactive atom that updates on Yjs changes |
 
+### `ReadonlyYLens<T>`
+
+Read-only variant of `YLens<T>`. Used for remote awareness states.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `focus(key)` | `ReadonlyYLens<T[K]>` | Focus on a child field |
+| `get()` | `T \| undefined` | Read the current value |
+| `getSafe()` | `Effect<T, ParseError>` | Read with validation |
+| `atom()` | `Atom<T \| undefined>` | Reactive atom that updates on changes |
+
+### `YAwareness.make(schema, doc)`
+
+Creates a new `Awareness` instance (from `y-protocols`) bound to a `Y.Doc` and returns a `YAwarenessHandle<A>`.
+
+### `YAwareness.bind(schema, awareness)`
+
+Binds a schema to an existing `Awareness` instance (e.g., from a provider like `y-websocket`).
+
+### `YAwarenessHandle<A>`
+
+| Property / Method | Returns | Description |
+|-------------------|---------|-------------|
+| `local` | `YLens<A>` | Read-write lens for the local client's state |
+| `remote(clientId)` | `ReadonlyYLens<A>` | Read-only lens for a remote client's state |
+| `clearLocal()` | `void` | Set local state to null (signals offline) |
+| `getStates()` | `ReadonlyMap<number, A>` | All clients' states (unvalidated) |
+| `getStatesSafe()` | `Effect<ReadonlyMap<number, A>, ParseError>` | All states with validation |
+| `statesAtom()` | `Atom<ReadonlyMap<number, A>>` | Reactive atom for all states |
+| `clientIdsAtom()` | `Atom<ReadonlyArray<number>>` | Reactive presence tracking (uses `'update'` event) |
+| `remoteStateFamily` | `(id: number) => Atom<A \| undefined>` | Stable per-client atoms via `Atom.family` |
+
 ## Limitations
 
 - **Discriminated unions** are detected and rejected at document creation time with a clear error. Support may be added in the future when conflict resolution semantics are well-defined.
 - **Y.XmlFragment / Y.XmlElement** are not supported.
 - **Schema migrations** between versions are not handled — this is a separate concern.
 - **Undo/Redo** integration with `Y.UndoManager` is not yet wired into the lens API.
+- **Persistence adapters** — users wire persistence at the `Y.Doc` level.
+- **Full optics** — prisms, traversals, isos deferred to a future version.
 
 ## Development
 
