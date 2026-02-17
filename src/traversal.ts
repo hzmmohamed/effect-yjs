@@ -1,10 +1,15 @@
 import * as AST from "effect/SchemaAST"
 import * as Y from "yjs"
 import { UnsupportedSchemaError } from "./errors.js"
-import { YTextTypeId } from "./markers.js"
+import { YLinkedListTypeId, YTextTypeId } from "./markers.js"
 
 export const isYTextAST = (ast: AST.AST): boolean => {
   const annotation = AST.getAnnotation<symbol>(YTextTypeId)(ast)
+  return annotation._tag === "Some"
+}
+
+export const isYLinkedListAST = (ast: AST.AST): boolean => {
+  const annotation = AST.getAnnotation<symbol>(YLinkedListTypeId)(ast)
   return annotation._tag === "Some"
 }
 
@@ -55,7 +60,9 @@ export const buildYjsTree = (
         const fieldCore = unwrap(prop.type)
         const fieldPath = [...path, fieldName]
 
-        if (isYTextAST(prop.type) || isYTextAST(fieldCore)) {
+        if (isYLinkedListAST(prop.type) || isYLinkedListAST(fieldCore)) {
+          parent.set(fieldName, new Y.Array())
+        } else if (isYTextAST(prop.type) || isYTextAST(fieldCore)) {
           parent.set(fieldName, new Y.Text())
         } else if (AST.isTypeLiteral(fieldCore)) {
           const childMap = new Y.Map()
