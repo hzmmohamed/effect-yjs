@@ -8,6 +8,7 @@ import { atomFromYArray, atomFromYMap, atomFromYMapKey, atomFromYText } from "./
 import { TypedYValidationError } from "./errors.js"
 import { YLinkedListItemAST } from "./markers.js"
 import { buildYjsTree, isYLinkedListAST, isYTextAST, unwrap } from "./traversal.js"
+import { createLinkedListLens } from "./YLinkedList.js"
 
 type LensKind = "struct" | "record" | "array" | "ytext" | "linkedlist" | "primitive"
 
@@ -232,7 +233,7 @@ export const createStructLens = (
         childArray = new Y.Array()
         yMap.set(key, childArray)
       }
-      return createLinkedListLensStub(fieldAST, childArray, doc)
+      return createLinkedListLens(fieldAST, childArray, doc)
     }
 
     if (fieldKind === "ytext") {
@@ -584,27 +585,3 @@ const createYTextLens = (
   }
 })
 
-const createLinkedListLensStub = (
-  _ast: AST.AST,
-  yArray: Y.Array<any>,
-  _doc: Y.Doc
-): any => ({
-  focus: () => {
-    throw new Error("Use find(id) or at(index) for linked list node access")
-  },
-  get: () => [],
-  set: () => {
-    throw new Error("Cannot set a linked list directly")
-  },
-  setEffect: () =>
-    Effect.fail(
-      new ParseError({
-        _tag: "Type",
-        ast: AST.stringKeyword,
-        actual: undefined,
-        message: "Cannot set a linked list directly"
-      } as any)
-    ),
-  getSafe: () => Effect.succeed([]),
-  atom: () => atomFromYArray(yArray, () => [])
-})
