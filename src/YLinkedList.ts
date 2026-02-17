@@ -1,5 +1,6 @@
 import { Atom } from "@effect-atom/atom"
 import * as Effect from "effect/Effect"
+import * as HashSet from "effect/HashSet"
 import { ParseError } from "effect/ParseResult"
 import * as S from "effect/Schema"
 import * as AST from "effect/SchemaAST"
@@ -61,7 +62,7 @@ export interface YLinkedListLens<T> {
   getSafe(): Effect.Effect<Array<T>, ParseError>
   length(): number
   atom(): Atom.Atom<Array<T>>
-  ids(): Atom.Atom<any>
+  ids(): Atom.Atom<HashSet.HashSet<string>>
 }
 
 export const createLinkedListLens = (
@@ -211,16 +212,17 @@ export const createLinkedListLens = (
     },
 
     ids() {
-      return atomFromYArray(yArray, () => {
-        const ids: Array<string> = []
+      const readIds = () => {
+        let set = HashSet.empty<string>()
         for (let i = 0; i < yArray.length; i++) {
           const item = yArray.get(i)
           if (item instanceof Y.Map) {
-            ids.push(item.get("_id") as string)
+            set = HashSet.add(set, item.get("_id") as string)
           }
         }
-        return ids
-      })
+        return set
+      }
+      return atomFromYArray(yArray, readIds)
     }
   }
 }

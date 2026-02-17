@@ -1,5 +1,6 @@
 import { Atom, Registry } from "@effect-atom/atom"
 import { describe, expect, it } from "@effect/vitest"
+import * as HashSet from "effect/HashSet"
 import * as S from "effect/Schema"
 import * as AST from "effect/SchemaAST"
 import * as Y from "yjs"
@@ -310,5 +311,68 @@ describe("YLinkedListLens.atom()", () => {
     expect(registry.get(a)).toEqual([{ x: 10, y: 20 }])
     pathLens.find(id).focus("x").set(99)
     expect(registry.get(a)).toEqual([{ x: 99, y: 20 }])
+  })
+})
+
+describe("YLinkedListLens.ids()", () => {
+  const PointSchema = S.Struct({ x: S.Number, y: S.Number })
+  const TestSchema = S.Struct({
+    path: YLinkedList(PointSchema)
+  })
+
+  it("returns a HashSet of current node ids", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    const idA = pathLens.append({ x: 10, y: 20 })
+    const idB = pathLens.append({ x: 30, y: 40 })
+    const idsAtom = pathLens.ids()
+    const registry = Registry.make()
+    const ids = registry.get(idsAtom)
+    expect(HashSet.has(ids, idA)).toBe(true)
+    expect(HashSet.has(ids, idB)).toBe(true)
+    expect(HashSet.size(ids)).toBe(2)
+  })
+
+  it("ids() updates when a node is added", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    const idA = pathLens.append({ x: 10, y: 20 })
+    const idsAtom = pathLens.ids()
+    const registry = Registry.make()
+    expect(HashSet.size(registry.get(idsAtom))).toBe(1)
+    const idB = pathLens.append({ x: 30, y: 40 })
+    const updated = registry.get(idsAtom)
+    expect(HashSet.size(updated)).toBe(2)
+    expect(HashSet.has(updated, idA)).toBe(true)
+    expect(HashSet.has(updated, idB)).toBe(true)
+  })
+
+  it("ids() updates when a node is removed", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    const idA = pathLens.append({ x: 10, y: 20 })
+    const idB = pathLens.append({ x: 30, y: 40 })
+    const idsAtom = pathLens.ids()
+    const registry = Registry.make()
+    expect(HashSet.size(registry.get(idsAtom))).toBe(2)
+    pathLens.remove(idA)
+    const updated = registry.get(idsAtom)
+    expect(HashSet.size(updated)).toBe(1)
+    expect(HashSet.has(updated, idB)).toBe(true)
+    expect(HashSet.has(updated, idA)).toBe(false)
+  })
+
+  it("ids() does NOT fire when a node field changes", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    const id = pathLens.append({ x: 10, y: 20 })
+    const idsAtom = pathLens.ids()
+    const registry = Registry.make()
+    const before = registry.get(idsAtom)
+    pathLens.find(id).focus("x").set(99)
+    const after = registry.get(idsAtom)
+    // Should be the exact same HashSet reference — no structural change
+    expect(HashSet.size(after)).toBe(1)
+    expect(HashSet.has(after, id)).toBe(true)
   })
 })
