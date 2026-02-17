@@ -1,3 +1,4 @@
+import { Atom, Registry } from "@effect-atom/atom"
 import { describe, expect, it } from "@effect/vitest"
 import * as S from "effect/Schema"
 import * as AST from "effect/SchemaAST"
@@ -257,5 +258,57 @@ describe("YLinkedListLens node access", () => {
     expect(nodeMap.has(idB)).toBe(true)
     expect(nodeMap.get(idA)!.get()).toEqual({ x: 10, y: 20 })
     expect(nodeMap.get(idB)!.get()).toEqual({ x: 30, y: 40 })
+  })
+})
+
+describe("YLinkedListLens.atom()", () => {
+  const PointSchema = S.Struct({ x: S.Number, y: S.Number })
+  const TestSchema = S.Struct({
+    path: YLinkedList(PointSchema)
+  })
+
+  it("returns an Atom instance", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    const a = pathLens.atom()
+    expect(Atom.isAtom(a)).toBe(true)
+  })
+
+  it("atom reads current list state", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    pathLens.append({ x: 10, y: 20 })
+    pathLens.append({ x: 30, y: 40 })
+    const a = pathLens.atom()
+    const registry = Registry.make()
+    expect(registry.get(a)).toEqual([
+      { x: 10, y: 20 },
+      { x: 30, y: 40 }
+    ])
+  })
+
+  it("atom updates when a node is appended", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    pathLens.append({ x: 10, y: 20 })
+    const a = pathLens.atom()
+    const registry = Registry.make()
+    expect(registry.get(a)).toEqual([{ x: 10, y: 20 }])
+    pathLens.append({ x: 30, y: 40 })
+    expect(registry.get(a)).toEqual([
+      { x: 10, y: 20 },
+      { x: 30, y: 40 }
+    ])
+  })
+
+  it("atom updates when a node field changes", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    const id = pathLens.append({ x: 10, y: 20 })
+    const a = pathLens.atom()
+    const registry = Registry.make()
+    expect(registry.get(a)).toEqual([{ x: 10, y: 20 }])
+    pathLens.find(id).focus("x").set(99)
+    expect(registry.get(a)).toEqual([{ x: 99, y: 20 }])
   })
 })

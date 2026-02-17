@@ -1,4 +1,4 @@
-import type { Atom } from "@effect-atom/atom"
+import { Atom } from "@effect-atom/atom"
 import * as Effect from "effect/Effect"
 import { ParseError } from "effect/ParseResult"
 import * as S from "effect/Schema"
@@ -200,7 +200,14 @@ export const createLinkedListLens = (
     },
 
     atom() {
-      return atomFromYArray(yArray, readAll)
+      return Atom.make((get: Atom.Context) => {
+        const handler = () => {
+          get.setSelf(readAll())
+        }
+        yArray.observeDeep(handler)
+        get.addFinalizer(() => yArray.unobserveDeep(handler))
+        return readAll()
+      })
     },
 
     ids() {
