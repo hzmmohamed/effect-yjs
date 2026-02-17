@@ -92,3 +92,55 @@ describe("YLinkedListLens.append and get", () => {
     expect(node.get("y")).toBe(20)
   })
 })
+
+describe("YLinkedListLens insertion operations", () => {
+  const PointSchema = S.Struct({ x: S.Number, y: S.Number })
+  const TestSchema = S.Struct({
+    path: YLinkedList(PointSchema)
+  })
+
+  it("prepend inserts at the beginning", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    pathLens.append({ x: 10, y: 20 })
+    pathLens.prepend({ x: 0, y: 0 })
+    expect(pathLens.get()).toEqual([
+      { x: 0, y: 0 },
+      { x: 10, y: 20 }
+    ])
+  })
+
+  it("insertAt inserts at a specific index", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    pathLens.append({ x: 10, y: 20 })
+    pathLens.append({ x: 30, y: 40 })
+    pathLens.insertAt(1, { x: 20, y: 30 })
+    expect(pathLens.get()).toEqual([
+      { x: 10, y: 20 },
+      { x: 20, y: 30 },
+      { x: 30, y: 40 }
+    ])
+  })
+
+  it("insertAfter inserts after a specific node", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    const idA = pathLens.append({ x: 10, y: 20 })
+    pathLens.append({ x: 30, y: 40 })
+    pathLens.insertAfter(idA, { x: 20, y: 30 })
+    expect(pathLens.get()).toEqual([
+      { x: 10, y: 20 },
+      { x: 20, y: 30 },
+      { x: 30, y: 40 }
+    ])
+  })
+
+  it("insertAfter throws for unknown id", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    expect(() => pathLens.insertAfter("nonexistent", { x: 1, y: 2 })).toThrow(
+      /Node not found/
+    )
+  })
+})
