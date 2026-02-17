@@ -6,9 +6,10 @@ import * as AST from "effect/SchemaAST"
 import * as Y from "yjs"
 import { atomFromYArray, atomFromYMap, atomFromYMapKey, atomFromYText } from "./atoms.js"
 import { TypedYValidationError } from "./errors.js"
+import type { YLinkedListOf } from "./markers.js"
 import { YLinkedListItemAST } from "./markers.js"
 import { buildYjsTree, isYLinkedListAST, isYTextAST, unwrap } from "./traversal.js"
-import { createLinkedListLens } from "./YLinkedList.js"
+import { createLinkedListLens, type YLinkedListLens } from "./YLinkedList.js"
 
 type LensKind = "struct" | "record" | "array" | "ytext" | "linkedlist" | "primitive"
 
@@ -178,8 +179,10 @@ const writeArrayFromPlain = (
   }
 }
 
+type FocusResult<T> = T extends YLinkedListOf<infer U> ? YLinkedListLens<U> : YLens<T>
+
 export interface YLens<T> {
-  focus: T extends { readonly [K in keyof T]: any } ? <K extends keyof T & string>(key: K) => YLens<T[K]>
+  focus: T extends { readonly [K in keyof T]: any } ? <K extends keyof T & string>(key: K) => FocusResult<T[K]>
     : (key: string) => YLens<any>
   get: () => T | undefined
   set: (value: T) => void

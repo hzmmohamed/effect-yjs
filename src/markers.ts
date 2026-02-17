@@ -14,9 +14,15 @@ export const YText: S.Schema<YTextMarker> = S.declare(
 export const YLinkedListTypeId: unique symbol = Symbol.for("effect-yjs/YLinkedList")
 export const YLinkedListItemAST: unique symbol = Symbol.for("effect-yjs/YLinkedList/itemAST")
 
+export const YLinkedListBrand: unique symbol = Symbol.for("effect-yjs/YLinkedListBrand")
+
+export interface YLinkedListOf<T> {
+  readonly [YLinkedListBrand]: T
+}
+
 export const YLinkedList = <TFields extends S.Struct.Fields>(
   itemSchema: S.Struct<TFields>
-): S.Schema<Array<S.Struct.Type<TFields>>> =>
+): S.Schema<YLinkedListOf<S.Struct.Type<TFields>>> =>
   S.declare(
     (input) => Array.isArray(input),
     { identifier: "YLinkedList" }

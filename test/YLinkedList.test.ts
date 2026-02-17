@@ -56,7 +56,7 @@ describe("YLinkedListLens.append and get", () => {
 
   it("append adds a node and returns a UUIDv7 id", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     const id = pathLens.append({ x: 10, y: 20 })
     expect(typeof id).toBe("string")
     expect(id.length).toBe(36) // UUID format
@@ -64,7 +64,7 @@ describe("YLinkedListLens.append and get", () => {
 
   it("get returns array of plain objects without _id", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     pathLens.append({ x: 10, y: 20 })
     pathLens.append({ x: 30, y: 40 })
     const result = pathLens.get()
@@ -76,13 +76,14 @@ describe("YLinkedListLens.append and get", () => {
 
   it("append validates against item schema", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
+    // @ts-expect-error — intentionally passing invalid data to test runtime validation
     expect(() => pathLens.append({ x: "not a number", y: 20 })).toThrow()
   })
 
   it("underlying Yjs structure is Y.Array of Y.Map with _id", () => {
     const { doc, root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     pathLens.append({ x: 10, y: 20 })
     const rootMap = doc.getMap("root")
     const yArray = rootMap.get("path") as Y.Array<any>
@@ -103,7 +104,7 @@ describe("YLinkedListLens insertion operations", () => {
 
   it("prepend inserts at the beginning", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     pathLens.append({ x: 10, y: 20 })
     pathLens.prepend({ x: 0, y: 0 })
     expect(pathLens.get()).toEqual([
@@ -114,7 +115,7 @@ describe("YLinkedListLens insertion operations", () => {
 
   it("insertAt inserts at a specific index", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     pathLens.append({ x: 10, y: 20 })
     pathLens.append({ x: 30, y: 40 })
     pathLens.insertAt(1, { x: 20, y: 30 })
@@ -127,7 +128,7 @@ describe("YLinkedListLens insertion operations", () => {
 
   it("insertAfter inserts after a specific node", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     const idA = pathLens.append({ x: 10, y: 20 })
     pathLens.append({ x: 30, y: 40 })
     pathLens.insertAfter(idA, { x: 20, y: 30 })
@@ -140,7 +141,7 @@ describe("YLinkedListLens insertion operations", () => {
 
   it("insertAfter throws for unknown id", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     expect(() => pathLens.insertAfter("nonexistent", { x: 1, y: 2 })).toThrow(
       /Node not found/
     )
@@ -155,7 +156,7 @@ describe("YLinkedListLens removal and length", () => {
 
   it("removeAt removes node at index", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     pathLens.append({ x: 10, y: 20 })
     pathLens.append({ x: 30, y: 40 })
     pathLens.append({ x: 50, y: 60 })
@@ -168,7 +169,7 @@ describe("YLinkedListLens removal and length", () => {
 
   it("remove removes node by id", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     pathLens.append({ x: 10, y: 20 })
     const idB = pathLens.append({ x: 30, y: 40 })
     pathLens.append({ x: 50, y: 60 })
@@ -181,13 +182,13 @@ describe("YLinkedListLens removal and length", () => {
 
   it("remove throws for unknown id", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     expect(() => pathLens.remove("nonexistent")).toThrow(/Node not found/)
   })
 
   it("length returns node count", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     expect(pathLens.length()).toBe(0)
     pathLens.append({ x: 10, y: 20 })
     expect(pathLens.length()).toBe(1)
@@ -206,7 +207,7 @@ describe("YLinkedListLens node access", () => {
 
   it("at() returns a lens to node at index", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     pathLens.append({ x: 10, y: 20 })
     pathLens.append({ x: 30, y: 40 })
     const lens = pathLens.at(1)
@@ -215,7 +216,7 @@ describe("YLinkedListLens node access", () => {
 
   it("at() lens can set values", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     pathLens.append({ x: 10, y: 20 })
     const lens = pathLens.at(0)
     lens.focus("x").set(99)
@@ -224,7 +225,7 @@ describe("YLinkedListLens node access", () => {
 
   it("find() returns a lens by id", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     const id = pathLens.append({ x: 10, y: 20 })
     const lens = pathLens.find(id)
     expect(lens.get()).toEqual({ x: 10, y: 20 })
@@ -232,7 +233,7 @@ describe("YLinkedListLens node access", () => {
 
   it("find() lens is stable — survives insertions", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     const id = pathLens.append({ x: 10, y: 20 })
     const lens = pathLens.find(id)
     // Insert before — the Y.Map reference doesn't change
@@ -244,13 +245,13 @@ describe("YLinkedListLens node access", () => {
 
   it("find() throws for unknown id", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     expect(() => pathLens.find("nonexistent")).toThrow(/Node not found/)
   })
 
   it("nodes() returns a Map of id to lens", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     const idA = pathLens.append({ x: 10, y: 20 })
     const idB = pathLens.append({ x: 30, y: 40 })
     const nodeMap = pathLens.nodes()
@@ -270,14 +271,14 @@ describe("YLinkedListLens.atom()", () => {
 
   it("returns an Atom instance", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     const a = pathLens.atom()
     expect(Atom.isAtom(a)).toBe(true)
   })
 
   it("atom reads current list state", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     pathLens.append({ x: 10, y: 20 })
     pathLens.append({ x: 30, y: 40 })
     const a = pathLens.atom()
@@ -290,7 +291,7 @@ describe("YLinkedListLens.atom()", () => {
 
   it("atom updates when a node is appended", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     pathLens.append({ x: 10, y: 20 })
     const a = pathLens.atom()
     const registry = Registry.make()
@@ -304,7 +305,7 @@ describe("YLinkedListLens.atom()", () => {
 
   it("atom updates when a node field changes", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     const id = pathLens.append({ x: 10, y: 20 })
     const a = pathLens.atom()
     const registry = Registry.make()
@@ -322,12 +323,12 @@ describe("YLinkedListLens.ids()", () => {
 
   it("returns a HashSet of current node ids", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     const idA = pathLens.append({ x: 10, y: 20 })
     const idB = pathLens.append({ x: 30, y: 40 })
     const idsAtom = pathLens.ids()
     const registry = Registry.make()
-    const ids = registry.get(idsAtom) as HashSet.HashSet<string>
+    const ids = registry.get(idsAtom)
     expect(HashSet.has(ids, idA)).toBe(true)
     expect(HashSet.has(ids, idB)).toBe(true)
     expect(HashSet.size(ids)).toBe(2)
@@ -335,13 +336,13 @@ describe("YLinkedListLens.ids()", () => {
 
   it("ids() updates when a node is added", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     const idA = pathLens.append({ x: 10, y: 20 })
     const idsAtom = pathLens.ids()
     const registry = Registry.make()
-    expect(HashSet.size(registry.get(idsAtom) as HashSet.HashSet<string>)).toBe(1)
+    expect(HashSet.size(registry.get(idsAtom))).toBe(1)
     const idB = pathLens.append({ x: 30, y: 40 })
-    const updated = registry.get(idsAtom) as HashSet.HashSet<string>
+    const updated = registry.get(idsAtom)
     expect(HashSet.size(updated)).toBe(2)
     expect(HashSet.has(updated, idA)).toBe(true)
     expect(HashSet.has(updated, idB)).toBe(true)
@@ -349,14 +350,14 @@ describe("YLinkedListLens.ids()", () => {
 
   it("ids() updates when a node is removed", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     const idA = pathLens.append({ x: 10, y: 20 })
     const idB = pathLens.append({ x: 30, y: 40 })
     const idsAtom = pathLens.ids()
     const registry = Registry.make()
-    expect(HashSet.size(registry.get(idsAtom) as HashSet.HashSet<string>)).toBe(2)
+    expect(HashSet.size(registry.get(idsAtom))).toBe(2)
     pathLens.remove(idA)
-    const updated = registry.get(idsAtom) as HashSet.HashSet<string>
+    const updated = registry.get(idsAtom)
     expect(HashSet.size(updated)).toBe(1)
     expect(HashSet.has(updated, idB)).toBe(true)
     expect(HashSet.has(updated, idA)).toBe(false)
@@ -364,13 +365,13 @@ describe("YLinkedListLens.ids()", () => {
 
   it("ids() does NOT fire when a node field changes", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     const id = pathLens.append({ x: 10, y: 20 })
     const idsAtom = pathLens.ids()
     const registry = Registry.make()
     registry.get(idsAtom)
     pathLens.find(id).focus("x").set(99)
-    const after = registry.get(idsAtom) as HashSet.HashSet<string>
+    const after = registry.get(idsAtom)
     // Should be the exact same HashSet reference — no structural change
     expect(HashSet.size(after)).toBe(1)
     expect(HashSet.has(after, id)).toBe(true)
@@ -385,7 +386,7 @@ describe("Node atom behavior on removal", () => {
 
   it("node atom retains last value after removal", () => {
     const { root } = YDocument.make(TestSchema)
-    const pathLens = root.focus("path") as any
+    const pathLens = root.focus("path")
     const id = pathLens.append({ x: 10, y: 20 })
     const nodeLens = pathLens.find(id)
     const nodeAtom = nodeLens.atom()

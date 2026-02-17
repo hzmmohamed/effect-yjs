@@ -213,6 +213,19 @@ to `main`.
 pnpm check && pnpm lint && pnpm test
 ```
 
+**Type safety — no type casts in public API:**
+- Type casting (`as any`, `as SomeType`) is **never acceptable** in
+  public API surfaces or in tests that exercise the public API.
+- If the type system cannot express a return type conditionally from
+  a single function, introduce **separate typed functions** instead
+  (e.g. `focusLinkedList(key)` rather than a generic `focus(key)`
+  that returns `any`).
+- Use conditional types and constrained generics to narrow input
+  keys to only those whose schema maps to the target lens kind.
+- If achieving type safety for a particular API seems too complex,
+  **consult the maintainer** before proceeding — do not silently
+  fall back to `as any`.
+
 **Style enforcement:**
 - Do not add semicolons — ASI style enforced by dprint.
 - Use `Array<T>` generic syntax, not `T[]`.
