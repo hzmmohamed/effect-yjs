@@ -6,14 +6,17 @@ import * as AST from "effect/SchemaAST"
 import * as Y from "yjs"
 import { atomFromYArray, atomFromYMap, atomFromYMapKey, atomFromYText } from "./atoms.js"
 import { TypedYValidationError } from "./errors.js"
-import { buildYjsTree, isYTextAST, unwrap } from "./traversal.js"
+import { YLinkedListItemAST } from "./markers.js"
+import { buildYjsTree, isYLinkedListAST, isYTextAST, unwrap } from "./traversal.js"
 
-type LensKind = "struct" | "record" | "array" | "ytext" | "primitive"
+type LensKind = "struct" | "record" | "array" | "ytext" | "linkedlist" | "primitive"
 
 const classifyAST = (ast: AST.AST): LensKind => {
   if (isYTextAST(ast)) return "ytext"
+  if (isYLinkedListAST(ast)) return "linkedlist"
   const core = unwrap(ast)
   if (isYTextAST(core)) return "ytext"
+  if (isYLinkedListAST(core)) return "linkedlist"
   if (AST.isTypeLiteral(core)) {
     if (core.propertySignatures.length > 0 && core.indexSignatures.length === 0) {
       return "struct"
@@ -50,6 +53,8 @@ const readStructAsObject = (yMap: Y.Map<any>, ast: AST.AST): any => {
       obj[key] = readStructAsObject(value, prop.type)
     } else if (fieldKind === "array" && value instanceof Y.Array) {
       obj[key] = readArrayAsPlain(value, prop.type)
+    } else if (fieldKind === "linkedlist" && value instanceof Y.Array) {
+      obj[key] = readLinkedListAsPlain(value, prop.type)
     } else if (fieldKind === "record" && value instanceof Y.Map) {
       obj[key] = readRecordAsObject(value, prop.type)
     } else if (fieldKind === "ytext" && value instanceof Y.Text) {
@@ -91,6 +96,25 @@ const readArrayAsPlain = (yArray: Y.Array<any>, ast: AST.AST): Array<any> => {
   return yArray.toArray().map((item) => {
     if (itemKind === "struct" && item instanceof Y.Map) {
       return readStructAsObject(item, itemAST)
+    }
+    return item
+  })
+}
+
+const readLinkedListAsPlain = (yArray: Y.Array<any>, ast: AST.AST): Array<any> => {
+  const annotation = AST.getAnnotation<AST.AST>(YLinkedListItemAST)(ast)
+  if (annotation._tag === "None") return yArray.toArray()
+  const itemAST = annotation.value
+  return yArray.toArray().map((item) => {
+    if (item instanceof Y.Map) {
+      const core = unwrap(itemAST)
+      if (!AST.isTypeLiteral(core)) return item
+      const obj: Record<string, any> = {}
+      for (const prop of core.propertySignatures) {
+        const key = String(prop.name)
+        obj[key] = item.get(key)
+      }
+      return obj
     }
     return item
   })
@@ -200,6 +224,15 @@ export const createStructLens = (
         yMap.set(key, childArray)
       }
       return createArrayLens(fieldAST, childArray, doc)
+    }
+
+    if (fieldKind === "linkedlist") {
+      let childArray = yMap.get(key)
+      if (!(childArray instanceof Y.Array)) {
+        childArray = new Y.Array()
+        yMap.set(key, childArray)
+      }
+      return createLinkedListLensStub(fieldAST, childArray, doc)
     }
 
     if (fieldKind === "ytext") {
@@ -549,4 +582,29 @@ const createYTextLens = (
   atom() {
     return atomFromYText(yText)
   }
+})
+
+const createLinkedListLensStub = (
+  _ast: AST.AST,
+  yArray: Y.Array<any>,
+  _doc: Y.Doc
+): any => ({
+  focus: () => {
+    throw new Error("Use find(id) or at(index) for linked list node access")
+  },
+  get: () => [],
+  set: () => {
+    throw new Error("Cannot set a linked list directly")
+  },
+  setEffect: () =>
+    Effect.fail(
+      new ParseError({
+        _tag: "Type",
+        ast: AST.stringKeyword,
+        actual: undefined,
+        message: "Cannot set a linked list directly"
+      } as any)
+    ),
+  getSafe: () => Effect.succeed([]),
+  atom: () => atomFromYArray(yArray, () => [])
 })

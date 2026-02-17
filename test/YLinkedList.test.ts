@@ -4,6 +4,7 @@ import * as AST from "effect/SchemaAST"
 import * as Y from "yjs"
 import { YLinkedList, YLinkedListItemAST, YLinkedListTypeId } from "../src/markers.js"
 import { buildYjsTree } from "../src/traversal.js"
+import { YDocument } from "../src/YDocument.js"
 
 describe("YLinkedList marker", () => {
   it("is detectable via annotation on the AST", () => {
@@ -29,5 +30,18 @@ describe("buildYjsTree with YLinkedList", () => {
     const root = doc.getMap("root")
     buildYjsTree(schema.ast, root, [])
     expect(root.get("points")).toBeInstanceOf(Y.Array)
+  })
+})
+
+describe("YLinkedListLens via focus", () => {
+  const PointSchema = S.Struct({ x: S.Number, y: S.Number })
+  const TestSchema = S.Struct({
+    path: YLinkedList(PointSchema)
+  })
+
+  it("focus into a YLinkedList field returns a lens", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path")
+    expect(pathLens).toBeDefined()
   })
 })
