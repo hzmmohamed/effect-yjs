@@ -1,0 +1,3 @@
+[submodule ".agents/effect-atom"]
+	path = .agents/effect-atom
+	url = https://github.com/tim-smart/effect-atom
