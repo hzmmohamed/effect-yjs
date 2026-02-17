@@ -144,3 +144,54 @@ describe("YLinkedListLens insertion operations", () => {
     )
   })
 })
+
+describe("YLinkedListLens removal and length", () => {
+  const PointSchema = S.Struct({ x: S.Number, y: S.Number })
+  const TestSchema = S.Struct({
+    path: YLinkedList(PointSchema)
+  })
+
+  it("removeAt removes node at index", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    pathLens.append({ x: 10, y: 20 })
+    pathLens.append({ x: 30, y: 40 })
+    pathLens.append({ x: 50, y: 60 })
+    pathLens.removeAt(1)
+    expect(pathLens.get()).toEqual([
+      { x: 10, y: 20 },
+      { x: 50, y: 60 }
+    ])
+  })
+
+  it("remove removes node by id", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    pathLens.append({ x: 10, y: 20 })
+    const idB = pathLens.append({ x: 30, y: 40 })
+    pathLens.append({ x: 50, y: 60 })
+    pathLens.remove(idB)
+    expect(pathLens.get()).toEqual([
+      { x: 10, y: 20 },
+      { x: 50, y: 60 }
+    ])
+  })
+
+  it("remove throws for unknown id", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    expect(() => pathLens.remove("nonexistent")).toThrow(/Node not found/)
+  })
+
+  it("length returns node count", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    expect(pathLens.length()).toBe(0)
+    pathLens.append({ x: 10, y: 20 })
+    expect(pathLens.length()).toBe(1)
+    pathLens.append({ x: 30, y: 40 })
+    expect(pathLens.length()).toBe(2)
+    pathLens.removeAt(0)
+    expect(pathLens.length()).toBe(1)
+  })
+})
