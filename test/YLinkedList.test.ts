@@ -376,3 +376,28 @@ describe("YLinkedListLens.ids()", () => {
     expect(HashSet.has(after, id)).toBe(true)
   })
 })
+
+describe("Node atom behavior on removal", () => {
+  const PointSchema = S.Struct({ x: S.Number, y: S.Number })
+  const TestSchema = S.Struct({
+    path: YLinkedList(PointSchema)
+  })
+
+  it("node atom retains last value after removal", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    const id = pathLens.append({ x: 10, y: 20 })
+    const nodeLens = pathLens.find(id)
+    const nodeAtom = nodeLens.atom()
+    const registry = Registry.make()
+
+    // Before removal
+    expect(registry.get(nodeAtom)).toEqual({ x: 10, y: 20 })
+
+    // Remove the node
+    pathLens.remove(id)
+
+    // After removal — should retain last value, not undefined
+    expect(registry.get(nodeAtom)).toEqual({ x: 10, y: 20 })
+  })
+})
