@@ -195,3 +195,67 @@ describe("YLinkedListLens removal and length", () => {
     expect(pathLens.length()).toBe(1)
   })
 })
+
+describe("YLinkedListLens node access", () => {
+  const PointSchema = S.Struct({ x: S.Number, y: S.Number })
+  const TestSchema = S.Struct({
+    path: YLinkedList(PointSchema)
+  })
+
+  it("at() returns a lens to node at index", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    pathLens.append({ x: 10, y: 20 })
+    pathLens.append({ x: 30, y: 40 })
+    const lens = pathLens.at(1)
+    expect(lens.get()).toEqual({ x: 30, y: 40 })
+  })
+
+  it("at() lens can set values", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    pathLens.append({ x: 10, y: 20 })
+    const lens = pathLens.at(0)
+    lens.focus("x").set(99)
+    expect(pathLens.get()).toEqual([{ x: 99, y: 20 }])
+  })
+
+  it("find() returns a lens by id", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    const id = pathLens.append({ x: 10, y: 20 })
+    const lens = pathLens.find(id)
+    expect(lens.get()).toEqual({ x: 10, y: 20 })
+  })
+
+  it("find() lens is stable — survives insertions", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    const id = pathLens.append({ x: 10, y: 20 })
+    const lens = pathLens.find(id)
+    // Insert before — the Y.Map reference doesn't change
+    pathLens.prepend({ x: 0, y: 0 })
+    expect(lens.get()).toEqual({ x: 10, y: 20 })
+    lens.focus("x").set(99)
+    expect(lens.get()).toEqual({ x: 99, y: 20 })
+  })
+
+  it("find() throws for unknown id", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    expect(() => pathLens.find("nonexistent")).toThrow(/Node not found/)
+  })
+
+  it("nodes() returns a Map of id to lens", () => {
+    const { root } = YDocument.make(TestSchema)
+    const pathLens = root.focus("path") as any
+    const idA = pathLens.append({ x: 10, y: 20 })
+    const idB = pathLens.append({ x: 30, y: 40 })
+    const nodeMap = pathLens.nodes()
+    expect(nodeMap.size).toBe(2)
+    expect(nodeMap.has(idA)).toBe(true)
+    expect(nodeMap.has(idB)).toBe(true)
+    expect(nodeMap.get(idA)!.get()).toEqual({ x: 10, y: 20 })
+    expect(nodeMap.get(idB)!.get()).toEqual({ x: 30, y: 40 })
+  })
+})
