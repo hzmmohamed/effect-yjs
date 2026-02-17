@@ -30,6 +30,7 @@
   "dependencies": {
     "@effect-atom/atom": "^0.5.1",
     "effect": "^3.17.7",
+    "uuid": "^13.0.0",
     "yjs": "^13.6.29"
   },
   "devDependencies": {
