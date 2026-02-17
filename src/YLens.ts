@@ -185,8 +185,8 @@ export interface YLens<T> {
   focus: T extends { readonly [K in keyof T]: any } ? <K extends keyof T & string>(key: K) => FocusResult<T[K]>
     : (key: string) => YLens<any>
   get: () => T | undefined
-  set: (value: T) => void
-  setEffect: (value: T) => Effect.Effect<void, ParseError>
+  syncSet: (value: T) => void
+  set: (value: T) => Effect.Effect<void, ParseError>
   getSafe: () => Effect.Effect<T, ParseError>
   atom: () => Atom.Atom<T | undefined>
 }
@@ -255,7 +255,7 @@ export const createStructLens = (
     return readStructAsObject(yMap, ast)
   },
 
-  set(value: any) {
+  syncSet(value: any) {
     const schema = S.make(ast)
     try {
       S.decodeUnknownSync(schema)(value)
@@ -270,7 +270,7 @@ export const createStructLens = (
     })
   },
 
-  setEffect(value: any) {
+  set(value: any) {
     return Effect.try({
       try: () => {
         const schema = S.make(ast)
@@ -319,7 +319,7 @@ const createPrimitiveLens = (
     return parentMap.get(key)
   },
 
-  set(value: any) {
+  syncSet(value: any) {
     const schema = S.make(ast)
     try {
       S.decodeUnknownSync(schema)(value)
@@ -332,7 +332,7 @@ const createPrimitiveLens = (
     parentMap.set(key, value)
   },
 
-  setEffect(value: any) {
+  set(value: any) {
     return Effect.try({
       try: () => {
         const schema = S.make(ast)
@@ -414,7 +414,7 @@ export const createRecordLens = (
       return readRecordAsObject(yMap, ast)
     },
 
-    set(value: any) {
+    syncSet(value: any) {
       const schema = S.make(ast)
       try {
         S.decodeUnknownSync(schema)(value)
@@ -440,7 +440,7 @@ export const createRecordLens = (
       })
     },
 
-    setEffect(value: any) {
+    set(value: any) {
       return Effect.try({
         try: () => {
           const schema = S.make(ast)
@@ -500,7 +500,7 @@ export const createArrayLens = (
     return readArrayAsPlain(yArray, ast)
   },
 
-  set(value: any) {
+  syncSet(value: any) {
     const schema = S.make(ast)
     try {
       S.decodeUnknownSync(schema)(value)
@@ -515,7 +515,7 @@ export const createArrayLens = (
     })
   },
 
-  setEffect(value: any) {
+  set(value: any) {
     return Effect.try({
       try: () => {
         const schema = S.make(ast)
@@ -562,13 +562,13 @@ const createYTextLens = (
     return yText
   },
 
-  set(_value: any) {
+  syncSet(_value: any) {
     throw new Error(
       "Cannot set Y.Text directly — use the Y.Text API (insert, delete, etc.)"
     )
   },
 
-  setEffect(_value: any) {
+  set(_value: any) {
     return Effect.fail(
       new ParseError({
         _tag: "Type",

@@ -219,7 +219,7 @@ describe("YLinkedListLens node access", () => {
     const pathLens = root.focus("path")
     pathLens.append({ x: 10, y: 20 })
     const lens = pathLens.at(0)
-    lens.focus("x").set(99)
+    lens.focus("x").syncSet(99)
     expect(pathLens.get()).toEqual([{ x: 99, y: 20 }])
   })
 
@@ -239,7 +239,7 @@ describe("YLinkedListLens node access", () => {
     // Insert before — the Y.Map reference doesn't change
     pathLens.prepend({ x: 0, y: 0 })
     expect(lens.get()).toEqual({ x: 10, y: 20 })
-    lens.focus("x").set(99)
+    lens.focus("x").syncSet(99)
     expect(lens.get()).toEqual({ x: 99, y: 20 })
   })
 
@@ -310,7 +310,7 @@ describe("YLinkedListLens.atom()", () => {
     const a = pathLens.atom()
     const registry = Registry.make()
     expect(registry.get(a)).toEqual([{ x: 10, y: 20 }])
-    pathLens.find(id).focus("x").set(99)
+    pathLens.find(id).focus("x").syncSet(99)
     expect(registry.get(a)).toEqual([{ x: 99, y: 20 }])
   })
 })
@@ -370,7 +370,7 @@ describe("YLinkedListLens.ids()", () => {
     const idsAtom = pathLens.ids()
     const registry = Registry.make()
     registry.get(idsAtom)
-    pathLens.find(id).focus("x").set(99)
+    pathLens.find(id).focus("x").syncSet(99)
     const after = registry.get(idsAtom)
     // Should be the exact same HashSet reference — no structural change
     expect(HashSet.size(after)).toBe(1)

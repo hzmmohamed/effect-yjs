@@ -23,16 +23,16 @@ describe("Type safety", () => {
     expect(() => root.focus("invalid")).toThrow()
   })
 
-  it("set accepts only the correct type", () => {
+  it("syncSet accepts only the correct type", () => {
     const { root } = YDocument.make(Schema)
-    root.focus("name").set("hello")
+    root.focus("name").syncSet("hello")
     // @ts-expect-error — number is not assignable to string
-    expect(() => root.focus("name").set(123)).toThrow()
+    expect(() => root.focus("name").syncSet(123)).toThrow()
   })
 
   it("nested focus is type-safe", () => {
     const { root } = YDocument.make(Schema)
-    root.focus("nested").focus("x").set(1)
+    root.focus("nested").focus("x").syncSet(1)
     // @ts-expect-error — "y" is not a field of nested
     expect(() => root.focus("nested").focus("y")).toThrow()
   })
@@ -47,11 +47,11 @@ describe("YLinkedList type safety", () => {
     expect(pathLens.length()).toBe(1)
   })
 
-  it("focus on linked list field does not have YLens.set", () => {
+  it("focus on linked list field does not have YLens.syncSet", () => {
     const { root } = YDocument.make(LinkedListSchema)
     const pathLens = root.focus("path")
-    // @ts-expect-error — YLinkedListLens does not have set()
-    expect(pathLens.set).toBeUndefined()
+    // @ts-expect-error — YLinkedListLens does not have syncSet()
+    expect(pathLens.syncSet).toBeUndefined()
   })
 
   it("focus on linked list field does not have YLens.focus", () => {
@@ -71,7 +71,7 @@ describe("YLinkedList type safety", () => {
   it("regular field still returns YLens", () => {
     const { root } = YDocument.make(LinkedListSchema)
     const nameLens = root.focus("name")
-    nameLens.set("hello")
+    nameLens.syncSet("hello")
     expect(nameLens.get()).toBe("hello")
   })
 })
