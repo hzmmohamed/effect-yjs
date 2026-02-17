@@ -1,5 +1,6 @@
 export { TypedYValidationError, UnsupportedSchemaError } from "./errors.js"
-export { YText, YTextTypeId } from "./markers.js"
+export { YLinkedList, YLinkedListTypeId, YText, YTextTypeId } from "./markers.js"
 export { YDocument } from "./YDocument.js"
 export type { YDocumentRoot } from "./YDocument.js"
 export type { YLens } from "./YLens.js"
+export type { YLinkedListLens } from "./YLinkedList.js"

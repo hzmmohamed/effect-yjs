@@ -327,7 +327,7 @@ describe("YLinkedListLens.ids()", () => {
     const idB = pathLens.append({ x: 30, y: 40 })
     const idsAtom = pathLens.ids()
     const registry = Registry.make()
-    const ids = registry.get(idsAtom)
+    const ids = registry.get(idsAtom) as HashSet.HashSet<string>
     expect(HashSet.has(ids, idA)).toBe(true)
     expect(HashSet.has(ids, idB)).toBe(true)
     expect(HashSet.size(ids)).toBe(2)
@@ -339,9 +339,9 @@ describe("YLinkedListLens.ids()", () => {
     const idA = pathLens.append({ x: 10, y: 20 })
     const idsAtom = pathLens.ids()
     const registry = Registry.make()
-    expect(HashSet.size(registry.get(idsAtom))).toBe(1)
+    expect(HashSet.size(registry.get(idsAtom) as HashSet.HashSet<string>)).toBe(1)
     const idB = pathLens.append({ x: 30, y: 40 })
-    const updated = registry.get(idsAtom)
+    const updated = registry.get(idsAtom) as HashSet.HashSet<string>
     expect(HashSet.size(updated)).toBe(2)
     expect(HashSet.has(updated, idA)).toBe(true)
     expect(HashSet.has(updated, idB)).toBe(true)
@@ -354,9 +354,9 @@ describe("YLinkedListLens.ids()", () => {
     const idB = pathLens.append({ x: 30, y: 40 })
     const idsAtom = pathLens.ids()
     const registry = Registry.make()
-    expect(HashSet.size(registry.get(idsAtom))).toBe(2)
+    expect(HashSet.size(registry.get(idsAtom) as HashSet.HashSet<string>)).toBe(2)
     pathLens.remove(idA)
-    const updated = registry.get(idsAtom)
+    const updated = registry.get(idsAtom) as HashSet.HashSet<string>
     expect(HashSet.size(updated)).toBe(1)
     expect(HashSet.has(updated, idB)).toBe(true)
     expect(HashSet.has(updated, idA)).toBe(false)
@@ -368,9 +368,9 @@ describe("YLinkedListLens.ids()", () => {
     const id = pathLens.append({ x: 10, y: 20 })
     const idsAtom = pathLens.ids()
     const registry = Registry.make()
-    const before = registry.get(idsAtom)
+    registry.get(idsAtom)
     pathLens.find(id).focus("x").set(99)
-    const after = registry.get(idsAtom)
+    const after = registry.get(idsAtom) as HashSet.HashSet<string>
     // Should be the exact same HashSet reference — no structural change
     expect(HashSet.size(after)).toBe(1)
     expect(HashSet.has(after, id)).toBe(true)

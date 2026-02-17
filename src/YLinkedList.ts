@@ -110,7 +110,7 @@ export const createLinkedListLens = (
   return {
     append(value: any): string {
       validateItem(value)
-      const { yMap, id } = createNode(value)
+      const { id, yMap } = createNode(value)
       doc.transact(() => {
         yArray.push([yMap])
       })
@@ -119,7 +119,7 @@ export const createLinkedListLens = (
 
     prepend(value: any): string {
       validateItem(value)
-      const { yMap, id } = createNode(value)
+      const { id, yMap } = createNode(value)
       doc.transact(() => {
         yArray.insert(0, [yMap])
       })
@@ -128,7 +128,7 @@ export const createLinkedListLens = (
 
     insertAt(index: number, value: any): string {
       validateItem(value)
-      const { yMap, id } = createNode(value)
+      const { id, yMap } = createNode(value)
       doc.transact(() => {
         yArray.insert(index, [yMap])
       })
