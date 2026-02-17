@@ -211,7 +211,7 @@ describe("YLinkedListLens node access", () => {
     pathLens.append({ x: 10, y: 20 })
     pathLens.append({ x: 30, y: 40 })
     const lens = pathLens.at(1)
-    expect(lens.get()).toEqual({ x: 30, y: 40 })
+    expect(lens.syncGet()).toEqual({ x: 30, y: 40 })
   })
 
   it("at() lens can set values", () => {
@@ -228,7 +228,7 @@ describe("YLinkedListLens node access", () => {
     const pathLens = root.focus("path")
     const id = pathLens.append({ x: 10, y: 20 })
     const lens = pathLens.find(id)
-    expect(lens.get()).toEqual({ x: 10, y: 20 })
+    expect(lens.syncGet()).toEqual({ x: 10, y: 20 })
   })
 
   it("find() lens is stable — survives insertions", () => {
@@ -238,9 +238,9 @@ describe("YLinkedListLens node access", () => {
     const lens = pathLens.find(id)
     // Insert before — the Y.Map reference doesn't change
     pathLens.prepend({ x: 0, y: 0 })
-    expect(lens.get()).toEqual({ x: 10, y: 20 })
+    expect(lens.syncGet()).toEqual({ x: 10, y: 20 })
     lens.focus("x").syncSet(99)
-    expect(lens.get()).toEqual({ x: 99, y: 20 })
+    expect(lens.syncGet()).toEqual({ x: 99, y: 20 })
   })
 
   it("find() throws for unknown id", () => {
@@ -258,8 +258,8 @@ describe("YLinkedListLens node access", () => {
     expect(nodeMap.size).toBe(2)
     expect(nodeMap.has(idA)).toBe(true)
     expect(nodeMap.has(idB)).toBe(true)
-    expect(nodeMap.get(idA)!.get()).toEqual({ x: 10, y: 20 })
-    expect(nodeMap.get(idB)!.get()).toEqual({ x: 30, y: 40 })
+    expect(nodeMap.get(idA)!.syncGet()).toEqual({ x: 10, y: 20 })
+    expect(nodeMap.get(idB)!.syncGet()).toEqual({ x: 30, y: 40 })
   })
 })
 

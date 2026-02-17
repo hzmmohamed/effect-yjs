@@ -1,6 +1,6 @@
 import type { Atom } from "@effect-atom/atom"
 import * as Effect from "effect/Effect"
-import { ParseError } from "effect/ParseResult"
+import { ParseError, Type as TypeIssue } from "effect/ParseResult"
 import * as S from "effect/Schema"
 import * as AST from "effect/SchemaAST"
 import * as Y from "yjs"
@@ -33,7 +33,7 @@ const classifyAST = (ast: AST.AST): LensKind => {
   return "primitive"
 }
 
-const getFieldAST = (
+export const getFieldAST = (
   ast: AST.AST,
   key: string
 ): AST.AST | undefined => {
@@ -184,10 +184,18 @@ type FocusResult<T> = T extends YLinkedListOf<infer U> ? YLinkedListLens<U> : YL
 export interface YLens<T> {
   focus: T extends { readonly [K in keyof T]: any } ? <K extends keyof T & string>(key: K) => FocusResult<T[K]>
     : (key: string) => YLens<any>
-  get: () => T | undefined
+  syncGet: () => T | undefined
   syncSet: (value: T) => void
   set: (value: T) => Effect.Effect<void, ParseError>
-  getSafe: () => Effect.Effect<T, ParseError>
+  get: () => Effect.Effect<T, ParseError>
+  atom: () => Atom.Atom<T | undefined>
+}
+
+export interface ReadonlyYLens<T> {
+  focus: T extends { readonly [K in keyof T]: any } ? <K extends keyof T & string>(key: K) => ReadonlyYLens<T[K]>
+    : (key: string) => ReadonlyYLens<any>
+  syncGet: () => T | undefined
+  get: () => Effect.Effect<T, ParseError>
   atom: () => Atom.Atom<T | undefined>
 }
 
@@ -251,7 +259,7 @@ export const createStructLens = (
     return createPrimitiveLens(fieldAST, yMap, key, doc)
   },
 
-  get() {
+  syncGet() {
     return readStructAsObject(yMap, ast)
   },
 
@@ -286,7 +294,7 @@ export const createStructLens = (
     })
   },
 
-  getSafe() {
+  get() {
     return Effect.try({
       try: () => {
         const obj = readStructAsObject(yMap, ast)
@@ -311,11 +319,11 @@ const createPrimitiveLens = (
   key: string,
   _doc: Y.Doc
 ): YLens<any> => ({
-  focus: (() => {
+  focus(_key: string): never {
     throw new Error("Cannot focus into a primitive value")
-  }) as any,
+  },
 
-  get() {
+  syncGet() {
     return parentMap.get(key)
   },
 
@@ -346,7 +354,7 @@ const createPrimitiveLens = (
     })
   },
 
-  getSafe() {
+  get() {
     return Effect.try({
       try: () => {
         const schema = S.make(ast)
@@ -410,7 +418,7 @@ export const createRecordLens = (
       return createPrimitiveLens(valueAST, yMap, key, doc)
     },
 
-    get() {
+    syncGet() {
       return readRecordAsObject(yMap, ast)
     },
 
@@ -431,7 +439,7 @@ export const createRecordLens = (
         for (const [k, v] of Object.entries(value as Record<string, any>)) {
           if (valueKind === "struct" && valueAST) {
             const childMap = new Y.Map()
-            writeStructFromObject(childMap, valueAST, v as any)
+            writeStructFromObject(childMap, valueAST, v)
             yMap.set(k, childMap)
           } else {
             yMap.set(k, v)
@@ -452,7 +460,7 @@ export const createRecordLens = (
             for (const [k, v] of Object.entries(value as Record<string, any>)) {
               if (valueKind === "struct" && valueAST) {
                 const childMap = new Y.Map()
-                writeStructFromObject(childMap, valueAST, v as any)
+                writeStructFromObject(childMap, valueAST, v)
                 yMap.set(k, childMap)
               } else {
                 yMap.set(k, v)
@@ -467,7 +475,7 @@ export const createRecordLens = (
       })
     },
 
-    getSafe() {
+    get() {
       return Effect.try({
         try: () => {
           const obj = readRecordAsObject(yMap, ast)
@@ -484,7 +492,7 @@ export const createRecordLens = (
     atom() {
       return atomFromYMap(yMap, () => readRecordAsObject(yMap, ast))
     }
-  } as any
+  }
 }
 
 export const createArrayLens = (
@@ -492,11 +500,11 @@ export const createArrayLens = (
   yArray: Y.Array<any>,
   doc: Y.Doc
 ): YLens<any> => ({
-  focus: (() => {
+  focus(_key: string): never {
     throw new Error("Use .at(index) for array access (not yet implemented)")
-  }) as any,
+  },
 
-  get() {
+  syncGet() {
     return readArrayAsPlain(yArray, ast)
   },
 
@@ -531,7 +539,7 @@ export const createArrayLens = (
     })
   },
 
-  getSafe() {
+  get() {
     return Effect.try({
       try: () => {
         const arr = readArrayAsPlain(yArray, ast)
@@ -554,11 +562,11 @@ const createYTextLens = (
   yText: Y.Text,
   _doc: Y.Doc
 ): YLens<any> => ({
-  focus: (() => {
+  focus(_key: string): never {
     throw new Error("Cannot focus into a Y.Text")
-  }) as any,
+  },
 
-  get() {
+  syncGet() {
     return yText
   },
 
@@ -571,15 +579,12 @@ const createYTextLens = (
   set(_value: any) {
     return Effect.fail(
       new ParseError({
-        _tag: "Type",
-        ast: AST.stringKeyword,
-        actual: _value,
-        message: "Cannot set Y.Text directly — use the Y.Text API"
-      } as any)
+        issue: new TypeIssue(AST.stringKeyword, _value, "Cannot set Y.Text directly — use the Y.Text API")
+      })
     )
   },
 
-  getSafe() {
+  get() {
     return Effect.succeed(yText)
   },
 

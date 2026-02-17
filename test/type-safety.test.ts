@@ -72,6 +72,6 @@ describe("YLinkedList type safety", () => {
     const { root } = YDocument.make(LinkedListSchema)
     const nameLens = root.focus("name")
     nameLens.syncSet("hello")
-    expect(nameLens.get()).toBe("hello")
+    expect(nameLens.syncGet()).toBe("hello")
   })
 })

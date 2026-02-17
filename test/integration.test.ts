@@ -28,7 +28,7 @@ describe("Full document lifecycle", () => {
     root.focus("metadata").focus("version").syncSet(1)
 
     // Use Y.Text directly
-    const title = root.focus("metadata").focus("title").get() as unknown as Y.Text
+    const title = root.focus("metadata").focus("title").syncGet() as unknown as Y.Text
     title.insert(0, "My Drawing")
 
     // Add shapes via record — focus into struct fields
@@ -43,11 +43,11 @@ describe("Full document lifecycle", () => {
     root.focus("tags").syncSet(["drawing", "v1"])
 
     // Read back
-    expect(root.focus("metadata").focus("version").get()).toBe(1)
+    expect(root.focus("metadata").focus("version").syncGet()).toBe(1)
     expect(title.toString()).toBe("My Drawing")
-    expect(root.focus("shapes").focus("shape-1").focus("x").get()).toBe(150)
-    expect(root.focus("shapes").focus("shape-1").focus("y").get()).toBe(200)
-    expect(root.focus("tags").get()).toEqual(["drawing", "v1"])
+    expect(root.focus("shapes").focus("shape-1").focus("x").syncGet()).toBe(150)
+    expect(root.focus("shapes").focus("shape-1").focus("y").syncGet()).toBe(200)
+    expect(root.focus("tags").syncGet()).toEqual(["drawing", "v1"])
   })
 
   it("two docs sync via Yjs", () => {
@@ -64,7 +64,7 @@ describe("Full document lifecycle", () => {
     Y.applyUpdate(doc2, state1)
 
     // Read on doc2
-    expect(root2.focus("count").get()).toBe(42)
+    expect(root2.focus("count").syncGet()).toBe(42)
   })
 
   it("lens passed to child component pattern", () => {
@@ -78,7 +78,7 @@ describe("Full document lifecycle", () => {
     const xLens = shapeLens.focus("x")
 
     xLens.syncSet(99)
-    expect(xLens.get()).toBe(99)
+    expect(xLens.syncGet()).toBe(99)
   })
 
   it("transactions batch multiple writes", () => {
@@ -103,7 +103,7 @@ describe("Full document lifecycle", () => {
     })
     const { root } = YDocument.make(S.Struct({ rect: Rectangle }))
     root.focus("rect").syncSet({ id: "r1", x: 0, y: 0, width: 100, height: 50 })
-    expect(root.focus("rect").focus("width").get()).toBe(100)
+    expect(root.focus("rect").focus("width").syncGet()).toBe(100)
   })
 
   it("schema composability — document-level", () => {
@@ -121,6 +121,6 @@ describe("Full document lifecycle", () => {
     const { root } = YDocument.make(ComposedDoc)
     root.focus("meta").focus("version").syncSet(1)
     root.focus("shapes").focus("p1").syncSet({ x: 5, y: 10 })
-    expect(root.focus("shapes").focus("p1").get()).toEqual({ x: 5, y: 10 })
+    expect(root.focus("shapes").focus("p1").syncGet()).toEqual({ x: 5, y: 10 })
   })
 })

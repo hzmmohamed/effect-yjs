@@ -19,18 +19,18 @@ describe("YLens", () => {
     it("set and get a string field", () => {
       const { root } = YDocument.make(TestSchema)
       root.focus("name").syncSet("hello")
-      expect(root.focus("name").get()).toBe("hello")
+      expect(root.focus("name").syncGet()).toBe("hello")
     })
 
     it("set and get a number field", () => {
       const { root } = YDocument.make(TestSchema)
       root.focus("count").syncSet(42)
-      expect(root.focus("count").get()).toBe(42)
+      expect(root.focus("count").syncGet()).toBe(42)
     })
 
     it("get returns undefined for unset fields", () => {
       const { root } = YDocument.make(TestSchema)
-      expect(root.focus("name").get()).toBeUndefined()
+      expect(root.focus("name").syncGet()).toBeUndefined()
     })
 
     it("throws TypedYValidationError on invalid set", () => {
@@ -46,22 +46,22 @@ describe("YLens", () => {
       const { root } = YDocument.make(TestSchema)
       root.focus("position").focus("x").syncSet(10)
       root.focus("position").focus("y").syncSet(20)
-      expect(root.focus("position").focus("x").get()).toBe(10)
-      expect(root.focus("position").focus("y").get()).toBe(20)
+      expect(root.focus("position").focus("x").syncGet()).toBe(10)
+      expect(root.focus("position").focus("y").syncGet()).toBe(20)
     })
 
     it("set entire nested struct", () => {
       const { root } = YDocument.make(TestSchema)
       root.focus("position").syncSet({ x: 5, y: 15 })
-      expect(root.focus("position").focus("x").get()).toBe(5)
-      expect(root.focus("position").focus("y").get()).toBe(15)
+      expect(root.focus("position").focus("x").syncGet()).toBe(5)
+      expect(root.focus("position").focus("y").syncGet()).toBe(15)
     })
 
     it("get entire nested struct as object", () => {
       const { root } = YDocument.make(TestSchema)
       root.focus("position").focus("x").syncSet(3)
       root.focus("position").focus("y").syncSet(7)
-      expect(root.focus("position").get()).toEqual({ x: 3, y: 7 })
+      expect(root.focus("position").syncGet()).toEqual({ x: 3, y: 7 })
     })
   })
 
@@ -71,7 +71,7 @@ describe("YLens", () => {
       const posLens = root.focus("position")
       const xLens = posLens.focus("x")
       xLens.syncSet(99)
-      expect(xLens.get()).toBe(99)
+      expect(xLens.syncGet()).toBe(99)
     })
   })
 })
@@ -91,27 +91,27 @@ describe("YLens — Records", () => {
     const { root } = YDocument.make(RecordSchema)
     root.focus("scores").focus("alice").syncSet(100)
     root.focus("scores").focus("bob").syncSet(85)
-    expect(root.focus("scores").focus("alice").get()).toBe(100)
-    expect(root.focus("scores").focus("bob").get()).toBe(85)
+    expect(root.focus("scores").focus("alice").syncGet()).toBe(100)
+    expect(root.focus("scores").focus("bob").syncGet()).toBe(85)
   })
 
   it("get entire record as object", () => {
     const { root } = YDocument.make(RecordSchema)
     root.focus("scores").focus("alice").syncSet(100)
-    expect(root.focus("scores").get()).toEqual({ alice: 100 })
+    expect(root.focus("scores").syncGet()).toEqual({ alice: 100 })
   })
 
   it("focus into record with struct values", () => {
     const { root } = YDocument.make(RecordSchema)
     root.focus("shapes").focus("s1").focus("x").syncSet(10)
     root.focus("shapes").focus("s1").focus("y").syncSet(20)
-    expect(root.focus("shapes").focus("s1").get()).toEqual({ x: 10, y: 20 })
+    expect(root.focus("shapes").focus("s1").syncGet()).toEqual({ x: 10, y: 20 })
   })
 
   it("set entire struct within a record", () => {
     const { root } = YDocument.make(RecordSchema)
     root.focus("shapes").focus("s1").syncSet({ x: 5, y: 15 })
-    expect(root.focus("shapes").focus("s1").focus("x").get()).toBe(5)
+    expect(root.focus("shapes").focus("s1").focus("x").syncGet()).toBe(5)
   })
 })
 
@@ -126,7 +126,7 @@ describe("YLens — Arrays", () => {
   it("set and get a primitive array", () => {
     const { root } = YDocument.make(ArraySchema)
     root.focus("numbers").syncSet([1, 2, 3])
-    expect(root.focus("numbers").get()).toEqual([1, 2, 3])
+    expect(root.focus("numbers").syncGet()).toEqual([1, 2, 3])
   })
 
   it("set and get an array of structs", () => {
@@ -135,7 +135,7 @@ describe("YLens — Arrays", () => {
       { x: 1, y: 2 },
       { x: 3, y: 4 }
     ])
-    expect(root.focus("points").get()).toEqual([
+    expect(root.focus("points").syncGet()).toEqual([
       { x: 1, y: 2 },
       { x: 3, y: 4 }
     ])
@@ -145,7 +145,7 @@ describe("YLens — Arrays", () => {
     const { root } = YDocument.make(ArraySchema)
     root.focus("numbers").syncSet([1, 2, 3])
     root.focus("numbers").syncSet([4, 5])
-    expect(root.focus("numbers").get()).toEqual([4, 5])
+    expect(root.focus("numbers").syncGet()).toEqual([4, 5])
   })
 })
 
@@ -159,13 +159,13 @@ const TextSchema = S.Struct({
 describe("YLens — YText", () => {
   it("focus on YText field returns the Y.Text instance", () => {
     const { root } = YDocument.make(TextSchema)
-    const titleText = root.focus("title").get()
+    const titleText = root.focus("title").syncGet()
     expect(titleText).toBeInstanceOf(Y.Text)
   })
 
   it("Y.Text can be manipulated directly", () => {
     const { root } = YDocument.make(TextSchema)
-    const titleText = root.focus("title").get() as unknown as Y.Text
+    const titleText = root.focus("title").syncGet() as unknown as Y.Text
     titleText.insert(0, "Hello, world!")
     expect(titleText.toString()).toBe("Hello, world!")
   })
@@ -178,7 +178,7 @@ describe("YLens — Effect integration", () => {
     const { root } = YDocument.make(TestSchema)
     const result = Effect.runSync(root.focus("count").set(42))
     expect(result).toBeUndefined()
-    expect(root.focus("count").get()).toBe(42)
+    expect(root.focus("count").syncGet()).toBe(42)
   })
 
   it("set returns failure Effect on validation error", () => {
@@ -189,10 +189,10 @@ describe("YLens — Effect integration", () => {
     expect(result._tag).toBe("Failure")
   })
 
-  it("getSafe returns Effect<T, ParseError> validating the data", () => {
+  it("get returns Effect<T, ParseError> validating the data", () => {
     const { root } = YDocument.make(TestSchema)
     root.focus("count").syncSet(42)
-    const result = Effect.runSync(root.focus("count").getSafe())
+    const result = Effect.runSync(root.focus("count").get())
     expect(result).toBe(42)
   })
 })
