@@ -415,6 +415,16 @@ export const createRecordLens = (
         return createArrayLens(valueAST, childArray, doc)
       }
 
+      if (valueKind === "linkedlist") {
+        let childArray = yMap.get(key)
+        if (!(childArray instanceof Y.Array)) {
+          childArray = new Y.Array()
+          yMap.set(key, childArray)
+        }
+        return createLinkedListLens(valueAST, childArray, doc)
+      }
+
+
       return createPrimitiveLens(valueAST, yMap, key, doc)
     },
 
