@@ -424,7 +424,6 @@ export const createRecordLens = (
         return createLinkedListLens(valueAST, childArray, doc)
       }
 
-
       return createPrimitiveLens(valueAST, yMap, key, doc)
     },
 
